@@ -1,0 +1,17 @@
+{
+    "version": "0.1",
+    "profiles": {
+        "test": {
+            "username": "test_user",
+            "password": "test_pass",
+            "amqp_url": "192.168.0.1",
+            "port": 5672
+        },
+        "test_2": {
+            "username": "test_user_2",
+            "password": "test_pass_2",
+            "amqp_url": "192.168.0.1",
+            "port": 5672
+        }
+    }
+}
