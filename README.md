@@ -9,7 +9,7 @@ TODO:
 
 Conda installation will be simplest for most users, and can be achieved with the following command:
 ```
-conda install -c bioconda varys
+conda install -c conda-forge varys
 ```
 
 Alternatively, varys can be installed directly from this repository by doing the following:
