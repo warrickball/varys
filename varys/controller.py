@@ -82,6 +82,7 @@ class varys:
                 log_file=self.__logfile,
                 log_level=self.__log_level,
                 queue_suffix=queue_suffix,
+                use_ssl=self.__credentials.use_ssl,
             )
             self.__out_channels[exchange]["varys_obj"].start()
 
@@ -107,6 +108,7 @@ class varys:
                 log_file=self.__logfile,
                 log_level=self.__log_level,
                 queue_suffix=queue_suffix,
+                use_ssl=self.__credentials.use_ssl,
             )
             self.__in_channels[exchange]["varys_obj"].start()
 
@@ -135,6 +137,7 @@ class varys:
                 log_file=self.__logfile,
                 log_level=self.__log_level,
                 queue_suffix=queue_suffix,
+                use_ssl=self.__credentials.use_ssl,
             )
             self.__in_channels[exchange]["varys_obj"].start()
 

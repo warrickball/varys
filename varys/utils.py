@@ -44,7 +44,8 @@ class configurator:
                 self.username = str(profile_dict["username"])
                 self.password = str(profile_dict["password"])
                 self.ampq_url = str(profile_dict["amqp_url"])
-                self.port = int(profile_dict["port"])
+                self.port = 5671 if profile_dict["ssl"] else 5672
+                self.ssl = bool(profile_dict["ssl"])
             except KeyError:
                 print(
                     f"Varys configuration JSON does not appear to contain the necessary fields for profile: {profile}",

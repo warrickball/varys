@@ -3,6 +3,7 @@ from pika.exchange_type import ExchangeType
 from threading import Thread
 from functools import partial
 import time
+import ssl
 
 from varys.utils import init_logger, varys_message
 
@@ -22,6 +23,7 @@ class consumer(Thread):
         prefetch_count=5,
         sleep_interval=10,
         reconnect=True,
+        use_ssl=True,
     ):
         Thread.__init__(self)
 
@@ -44,13 +46,28 @@ class consumer(Thread):
         self._routing_key = routing_key
         self._sleep_interval = sleep_interval
 
-        self._parameters = pika.ConnectionParameters(
-            host=configuration.ampq_url,
-            port=configuration.port,
-            credentials=pika.PlainCredentials(
-                username=configuration.username, password=configuration.password
-            ),
-        )
+        if use_ssl:
+            # SSL Context for TLS configuration of Amazon MQ for RabbitMQ
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            ssl_context.set_ciphers("ECDHE+AESGCM:!ECDSA")
+
+            self._parameters = pika.ConnectionParameters(
+                host=configuration.ampq_url,
+                port=configuration.port,
+                credentials=pika.PlainCredentials(
+                    username=configuration.username, password=configuration.password
+                ),
+                ssl=True,
+                ssl_options=pika.SSLOptions(ssl_context),
+            )
+        else:
+            self._parameters = pika.ConnectionParameters(
+                host=configuration.ampq_url,
+                port=configuration.port,
+                credentials=pika.PlainCredentials(
+                    username=configuration.username, password=configuration.password
+                ),
+            )
 
     def __connect(self):
         return pika.SelectConnection(

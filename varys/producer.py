@@ -5,6 +5,7 @@ from threading import Thread
 import time
 import queue
 import json
+import ssl
 
 from varys.utils import init_logger
 
@@ -20,6 +21,7 @@ class producer(Thread):
         queue_suffix,
         routing_key="arbitrary_string",
         sleep_interval=10,
+        use_ssl=True,
     ):
         # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
         Thread.__init__(self)
@@ -44,13 +46,28 @@ class producer(Thread):
 
         self._stopping = False
 
-        self._parameters = pika.ConnectionParameters(
-            host=configuration.ampq_url,
-            port=configuration.port,
-            credentials=pika.PlainCredentials(
-                username=configuration.username, password=configuration.password
-            ),
-        )
+        if use_ssl:
+            # SSL Context for TLS configuration of Amazon MQ for RabbitMQ
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            ssl_context.set_ciphers("ECDHE+AESGCM:!ECDSA")
+
+            self._parameters = pika.ConnectionParameters(
+                host=configuration.ampq_url,
+                port=configuration.port,
+                credentials=pika.PlainCredentials(
+                    username=configuration.username, password=configuration.password
+                ),
+                ssl=True,
+                ssl_options=pika.SSLOptions(ssl_context),
+            )
+        else:
+            self._parameters = pika.ConnectionParameters(
+                host=configuration.ampq_url,
+                port=configuration.port,
+                credentials=pika.PlainCredentials(
+                    username=configuration.username, password=configuration.password
+                ),
+            )
 
         self._message_properties = pika.BasicProperties(
             content_type="json", delivery_mode=2
