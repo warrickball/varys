@@ -108,7 +108,7 @@ class varys:
                 log_level=self.__log_level,
                 queue_suffix=queue_suffix,
             )
-            self.__in_channels[exchange]["varys_obj"].run()
+            self.__in_channels[exchange]["varys_obj"].start()
 
         try:
             return self.__in_channels[exchange]["queue"].get(block=block)
