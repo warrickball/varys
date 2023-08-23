@@ -128,7 +128,7 @@ class varys:
 
             self.__in_channels[exchange] = {"queue": queue.Queue()}
             self.__in_channels[exchange]["varys_obj"] = consumer(
-                received_messages=self.__in_channels[exchange]["queue"],
+                message_queue=self.__in_channels[exchange]["queue"],
                 routing_key=self.routing_key,
                 exchange=exchange,
                 configuration=self.__credentials,
