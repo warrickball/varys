@@ -29,5 +29,5 @@ jobs:
     - name: Test with pytest
       run: |
         # sometimes the scripts hang because the channels can't be closed,
-	# so run under a short timeout
+        # so run under a short timeout
         timeout 15s pytest
