@@ -56,8 +56,12 @@ class TestVarys(unittest.TestCase):
     def test_config_not_json(self):
         with open(TMP_FILENAME, 'w') as f:
             f.write("asdf9υ021ζ3;-ö×=()[]{}∇Δοo")
-            
-        self.assertRaises(SystemExit, varys, 'test', LOG_FILENAME, config_path=TMP_FILENAME)
+
+        # use a context manager so we can check SystemExit code
+        with self.assertRaises(SystemExit) as cm:
+            v = varys('test', LOG_FILENAME, config_path=TMP_FILENAME)
+
+        self.assertEqual(cm.exception.code, 11)
 
         os.remove(TMP_FILENAME)
 
@@ -73,7 +77,7 @@ class TestVarys(unittest.TestCase):
             json.dump(config, f, ensure_ascii=False)
             
         with self.assertRaises(SystemExit) as cm:
-            varys('test', LOG_FILENAME, config_path=TMP_FILENAME)
+            v = varys('test', LOG_FILENAME, config_path=TMP_FILENAME)
             
         self.assertEqual(cm.exception.code, 2)
 
@@ -92,7 +96,10 @@ class TestVarys(unittest.TestCase):
 
         with open(TMP_FILENAME, 'w') as f:
             json.dump(config, f, ensure_ascii=False)
-            
-        self.assertRaises(SystemExit, varys, 'test', LOG_FILENAME, config_path=TMP_FILENAME)
+
+        with self.assertRaises(SystemExit) as cm:
+            v = varys('test', LOG_FILENAME, config_path=TMP_FILENAME)
+
+        self.assertEqual(cm.exception.code, 11)
 
         os.remove(TMP_FILENAME)
