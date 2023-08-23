@@ -11,9 +11,24 @@ TMP_HANDLE, TMP_FILENAME = tempfile.mkstemp()
 class TestVarys(unittest.TestCase):
 
     def test_varys(self):
+        config = {
+            "version": "0.1",
+            "profiles": {
+                "test": {
+                    "username": "guest",
+                    "password": "guest",
+                    "amqp_url": "127.0.0.1",
+                    "port": 5672
+                }
+            }
+        }
+
+        with open(TMP_FILENAME, 'w') as f:
+            json.dump(config, f, ensure_ascii=False)
+
         text = "Hello, world!"
 
-        v = varys('test', LOG_FILENAME, config_path=DIR+'/../test_config.json')
+        v = varys('test', LOG_FILENAME, config_path=TMP_FILENAME)
 
         self.assertRaises(Exception, v.send, text, 'basic')
         self.assertRaises(Exception, v.receive, 'basic', block=False)

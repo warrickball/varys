@@ -28,4 +28,6 @@ jobs:
       run: python3 -m pip install -e .
     - name: Test with pytest
       run: |
-        pytest
+        # sometimes the scripts hang because the channels can't be closed,
+	# so run under a short timeout
+        timeout 15s pytest
