@@ -1,4 +1,5 @@
 import unittest
+import time
 import tempfile
 import os
 import json
@@ -30,6 +31,13 @@ class TestVarys(unittest.TestCase):
         self.v = varys('test', LOG_FILENAME, config_path=TMP_FILENAME)
 
     def tearDown(self):
+        # this seems to prevent some hanging
+        # or errors related to closing connections that haven't opened yet
+        # I presume because some operations are so fast
+        # that we try to close the connections before they've opened
+        # 0.01s seems to be sufficient; 0.1s is just a bit conservative
+        time.sleep(0.1)
+
         channels = self.v.get_channels()
         for key in channels['consumer_channels']:
             print(f"tearing down consumer {key}")
@@ -47,13 +55,11 @@ class TestVarys(unittest.TestCase):
         message = self.v.receive('basic', queue_suffix='q')
         self.assertEqual(TEXT, json.loads(message.body))
 
-    # def test_send_and_receive_batch(self):
-    # hangs if in separate test
+    def test_send_and_receive_batch(self):
         self.v.send(TEXT, 'basic', queue_suffix='q')
         messages = self.v.receive_batch('basic', queue_suffix='q')
 
-    # def test_receive_no_message(self):
-    # hangs if in separate test
+    def test_receive_no_message(self):
         self.assertIsNone(self.v.receive('basic', queue_suffix='q', block=False))
 
     def test_send_no_suffix(self):
