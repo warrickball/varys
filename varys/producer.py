@@ -185,7 +185,7 @@ class producer(Thread):
     def __close_connection(self):
         if self._connection is not None:
             self._log.info("Closing connection")
-            self._channel.close()
+            self._connection.close()
 
     def publish_message(self, message):
         if self._channel is None or not self._channel.is_open:
