@@ -1,5 +1,7 @@
 ## Varys - A python RabbitMQ client for CLIMB-TRE
 
+![Varys CI Status](https://github.com/CLIMB-TRE/varys/actions/workflows/pytest.yml/badge.svg)
+
 TODO:
 * Add SSL support
 * Properly implement graceful stopping
