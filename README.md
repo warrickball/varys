@@ -4,7 +4,6 @@
 
 TODO:
 * Add SSL support
-* Properly implement graceful stopping
 
 ---
 ### Installation
