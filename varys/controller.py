@@ -142,7 +142,11 @@ class varys:
 
         while not self.__in_channels[exchange]["queue"].empty():
             try:
-                messages.append(self.receive(block=False))
+                messages.append(
+                    self.receive(
+                        exchange=exchange, queue_suffix=queue_suffix, block=False
+                    )
+                )
             except queue.Empty:
                 break
 
