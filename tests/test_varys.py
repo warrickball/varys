@@ -58,8 +58,9 @@ class TestVarys(unittest.TestCase):
     def test_send_and_receive_batch(self):
         self.v.send(TEXT, 'basic', queue_suffix='q')
         self.v.send(TEXT, 'basic', queue_suffix='q')
+        # give the messages time to be received / processed by rmq
+        time.sleep(1)
         messages = self.v.receive_batch('basic', queue_suffix='q')
-        print(messages)
         parsed_messages = [json.loads(m.body) for m in messages]
         self.assertListEqual([TEXT, TEXT], parsed_messages)
 
