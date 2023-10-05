@@ -41,12 +41,12 @@ class TestVarys(unittest.TestCase):
         channels = self.v.get_channels()
         for key in channels['consumer_channels']:
             print(f"tearing down consumer {key}")
-            self.v._varys__in_channels[key]["varys_obj"].close_connection()
-            self.v._varys__in_channels[key]["varys_obj"].stop()
+            self.v._in_channels[key]["varys_obj"].close_connection()
+            self.v._in_channels[key]["varys_obj"].stop()
 
         for key in channels['producer_channels']:
             print(f"tearing down producer {key}")
-            self.v._varys__out_channels[key]["varys_obj"].stop()
+            self.v._out_channels[key]["varys_obj"].stop()
 
         os.remove(TMP_FILENAME)
 
@@ -57,7 +57,9 @@ class TestVarys(unittest.TestCase):
 
     def test_send_and_receive_batch(self):
         self.v.send(TEXT, 'basic', queue_suffix='q')
+        self.v.send(TEXT, 'basic', queue_suffix='q')
         messages = self.v.receive_batch('basic', queue_suffix='q')
+        self.assertListEqual([TEXT, TEXT], [json.loads(m.body) for m in messages])
 
     def test_receive_no_message(self):
         self.assertIsNone(self.v.receive('basic', queue_suffix='q', block=False))
