@@ -87,7 +87,7 @@ class varys:
 
         self._out_channels[exchange]["queue"].put(message)
 
-    def receive(self, exchange, queue_suffix=False):
+    def receive(self, exchange, queue_suffix=False, block=True):
         """
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it.
         """
@@ -110,7 +110,7 @@ class varys:
             )
             self._in_channels[exchange]["varys_obj"].start()
 
-        message = self._in_channels[exchange]["queue"].get(block=True)
+        message = self._in_channels[exchange]["queue"].get(block=block)
         #Only ack a message when it is pulled out of the thread-safe queue
         self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
         return message
