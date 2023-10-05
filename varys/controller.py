@@ -87,7 +87,7 @@ class varys:
 
         self._out_channels[exchange]["queue"].put(message)
 
-    def receive(self, exchange, queue_suffix=False, block=True):
+    def receive(self, exchange, queue_suffix=False):
         """
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it.
         """
@@ -110,13 +110,10 @@ class varys:
             )
             self._in_channels[exchange]["varys_obj"].start()
 
-        try:
-            message = self._in_channels[exchange]["queue"].get(block=block)
-            #Only ack a message when it is pulled out of the thread-safe queue
-            self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
-            return message
-        except queue.Empty:
-            return None
+        message = self._in_channels[exchange]["queue"].get(block=True)
+        #Only ack a message when it is pulled out of the thread-safe queue
+        self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
+        return message
 
     def receive_batch(self, exchange, queue_suffix=False):
         """
@@ -143,12 +140,15 @@ class varys:
 
         messages = []
 
-        while not self._in_channels[exchange]["queue"].empty():
-            message = self.receive(
-                    exchange=exchange, queue_suffix=queue_suffix, block=False
-                )
-            if message:
+        #This seems like a terrible idea, but it works
+        while True:
+            try:
+                #Block false returns Queue.Empty no matter what, why does Queue have this arg????????
+                message = self._in_channels[exchange]["queue"].get(block=True, timeout=1)
+                self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
                 messages.append(message)
+            except queue.Empty:
+                break
                 
         return messages
 
