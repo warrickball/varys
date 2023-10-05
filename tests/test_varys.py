@@ -59,7 +59,9 @@ class TestVarys(unittest.TestCase):
         self.v.send(TEXT, 'basic', queue_suffix='q')
         self.v.send(TEXT, 'basic', queue_suffix='q')
         messages = self.v.receive_batch('basic', queue_suffix='q')
-        self.assertListEqual([TEXT, TEXT], [json.loads(m.body) for m in messages])
+        print(messages)
+        parsed_messages = [json.loads(m.body) for m in messages]
+        self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def test_receive_no_message(self):
         self.assertIsNone(self.v.receive('basic', queue_suffix='q', block=False))
