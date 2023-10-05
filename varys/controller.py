@@ -111,7 +111,9 @@ class varys:
             self._in_channels[exchange]["varys_obj"].start()
 
         try:
-            return self._in_channels[exchange]["queue"].get(block=block)
+            message = self._in_channels[exchange]["queue"].get(block=block)
+            self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
+            return message
         except queue.Empty:
             return None
 

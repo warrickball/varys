@@ -140,7 +140,7 @@ class consumer(Process):
             f"Received Message: # {message.basic_deliver.delivery_tag} from {message.properties.app_id}, {message.body}"
         )
         self._messages.put(message)
-        self._acknowledge_message(message.basic_deliver.delivery_tag)
+        # self._acknowledge_message(message.basic_deliver.delivery_tag)
 
     def _acknowledge_message(self, delivery_tag):
         self._log.info(f"Acknowledging message: {delivery_tag}")
