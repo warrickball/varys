@@ -30,7 +30,7 @@ jobs:
       run: |
         # sometimes the scripts hang because the channels can't be closed,
         # so run under a short timeout
-        timeout 15s pytest --cov-report=term-missing --cov=varys
+        timeout 60s pytest --cov-report=term-missing --cov=varys
     - name: 'Upload Logfile'
       uses: actions/upload-artifact@v3
       with:
