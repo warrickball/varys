@@ -1,5 +1,6 @@
 build*
 varys/__pycache__*
 tests/__pycache__*
+tests/test.log
 varys.egg-info/*
 .pytest_cache*
