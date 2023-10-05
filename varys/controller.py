@@ -41,7 +41,7 @@ class varys:
         Return a dict of all the channels that have been connected to with the keys "consumer_channels" and "producer_channels"
     """
 
-    def _init_(
+    def __init__(
         self,
         profile,
         logfile,
