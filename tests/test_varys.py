@@ -65,13 +65,13 @@ class TestVarys(unittest.TestCase):
         self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def test_receive_no_message(self):
-        self.assertIsNone(self.v.receive('basic', queue_suffix='q', block=False))
+        self.assertIsNone(self.v.receive('basic', queue_suffix='q'))
 
     def test_send_no_suffix(self):
         self.assertRaises(Exception, self.v.send, TEXT, 'basic')
 
     def test_receive_no_suffix(self):
-        self.assertRaises(Exception, self.v.receive, 'basic', block=False)
+        self.assertRaises(Exception, self.v.receive, 'basic')
 
     def test_receive_batch_no_suffix(self):
         self.assertRaises(Exception, self.v.receive_batch, 'basic')
