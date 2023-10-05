@@ -31,3 +31,10 @@ jobs:
         # sometimes the scripts hang because the channels can't be closed,
         # so run under a short timeout
         timeout 15s pytest --cov-report=term-missing --cov=varys
+    - name: 'Upload Logfile'
+      uses: actions/upload-artifact@v3
+      with:
+        name: workflow-logfile
+        path: tests/test.log
+        retention-days: 5
+
