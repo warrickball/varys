@@ -112,6 +112,7 @@ class varys:
 
         try:
             message = self._in_channels[exchange]["queue"].get(block=block)
+            #Only ack a message when it is pulled out of the thread-safe queue
             self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
             return message
         except queue.Empty:
