@@ -38,16 +38,7 @@ class TestVarys(unittest.TestCase):
         # 0.01s seems to be sufficient; 0.1s is just a bit conservative
         time.sleep(0.1)
 
-        channels = self.v.get_channels()
-        for key in channels['consumer_channels']:
-            print(f"tearing down consumer {key}")
-            self.v._in_channels[key]["varys_obj"].close_connection()
-            self.v._in_channels[key]["varys_obj"].stop()
-
-        for key in channels['producer_channels']:
-            print(f"tearing down producer {key}")
-            self.v._out_channels[key]["varys_obj"].stop()
-
+        self.v.close()
         os.remove(TMP_FILENAME)
 
     def test_send_and_receive(self):

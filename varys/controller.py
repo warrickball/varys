@@ -39,6 +39,8 @@ class varys:
         Either receive a batch of messages from an existing exchange, or create a new exchange connection and receive a batch of messages from it. queue_suffix must be provided when receiving a message from a queue for the first time to instantiate a new connection.
     get_channels()
         Return a dict of all the channels that have been connected to with the keys "consumer_channels" and "producer_channels"
+    close()
+        Close all open channels
     """
 
     def __init__(
@@ -162,3 +164,13 @@ class varys:
             "consumer_channels": self._in_channels.keys(),
             "producer_channels": self._out_channels.keys(),
         }
+    
+    def close(self):
+        """Close all open channels."""
+
+        for key in self._in_channels.keys():
+            self._in_channels[key]["varys_obj"].close_connection()
+            self._in_channels[key]["varys_obj"].stop()
+
+        for key in self._out_channels.keys():
+            self._out_channels[key]["varys_obj"].stop()
