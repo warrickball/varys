@@ -3,6 +3,8 @@ import time
 import queue
 import json
 
+from pika.exchange_type import ExchangeType
+
 from varys.utils import init_logger
 from varys.process import Process
 
@@ -17,6 +19,7 @@ class producer(Process):
         queue_suffix,
         routing_key="arbitrary_string",
         sleep_interval=10,
+        exchange_type=ExchangeType.topic
     ):
         # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
         super().__init__()
@@ -35,6 +38,8 @@ class producer(Process):
         self._acked = None
         self._nacked = None
         self._message_number = None
+
+        self._exchange_type = exchange_type
 
         self._stopping = False
 

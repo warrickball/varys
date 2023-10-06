@@ -18,15 +18,15 @@ class varys:
         profile name inside the configuration file to use when connecting to RabbitMQ
     configuration_path : str
         path to varys confiruration JSON file, provided with either the config_path argument or the VARYS_CFG environment variable
-    __logfile : str
+    _logfile : str
         the path to the logfile to use for logging, provided with the logfile argument
-    __log_level : str
+    _log_level : str
         the log level to use for logging, provided with the log_level argument, defaults to DEBUG (the most verbose logging level)
-    __credentials : class
+    _credentials : class
         an instance of the configurator class, used to store the RabbitMQ connection credentials
-    __in_channels : dict
+    _in_channels : dict
         a dictionary of consumer classes and queues that have been connected to for receiving messages
-    __out_channels : dict
+    _out_channels : dict
         a dictionary of producer classes and queues that have been connected to for sending messages
 
     Methods
@@ -39,6 +39,8 @@ class varys:
         Either receive a batch of messages from an existing exchange, or create a new exchange connection and receive a batch of messages from it. queue_suffix must be provided when receiving a message from a queue for the first time to instantiate a new connection.
     get_channels()
         Return a dict of all the channels that have been connected to with the keys "consumer_channels" and "producer_channels"
+    close()
+        Close all open channels
     """
 
     def __init__(
@@ -54,64 +56,67 @@ class varys:
 
         self.routing_key = routing_key
 
-        self.__logfile = logfile
-        self.__log_level = log_level
+        self._logfile = logfile
+        self._log_level = log_level
 
-        self.__credentials = configurator(self.profile, self.configuration_path)
+        self._credentials = configurator(self.profile, self.configuration_path)
 
-        self.__in_channels = {}
-        self.__out_channels = {}
+        self._in_channels = {}
+        self._out_channels = {}
 
     def send(self, message, exchange, queue_suffix=False):
         """
         Either send a message to an existing exchange, or create a new exchange connection and send the message to it.
         """
 
-        if not self.__out_channels.get(exchange):
+        if not self._out_channels.get(exchange):
             if not queue_suffix:
                 raise Exception(
                     "Must provide a queue suffix when sending a message to a queue for the first time"
                 )
 
-            self.__out_channels[exchange] = {"queue": queue.Queue()}
-            self.__out_channels[exchange]["varys_obj"] = producer(
-                message_queue=self.__out_channels[exchange]["queue"],
+            self._out_channels[exchange] = {"queue": queue.Queue()}
+            self._out_channels[exchange]["varys_obj"] = producer(
+                message_queue=self._out_channels[exchange]["queue"],
                 routing_key=self.routing_key,
                 exchange=exchange,
-                configuration=self.__credentials,
-                log_file=self.__logfile,
-                log_level=self.__log_level,
+                configuration=self._credentials,
+                log_file=self._logfile,
+                log_level=self._log_level,
                 queue_suffix=queue_suffix,
             )
-            self.__out_channels[exchange]["varys_obj"].start()
+            self._out_channels[exchange]["varys_obj"].start()
 
-        self.__out_channels[exchange]["queue"].put(message)
+        self._out_channels[exchange]["queue"].put(message)
 
     def receive(self, exchange, queue_suffix=False, block=True):
         """
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it.
         """
 
-        if not self.__in_channels.get(exchange):
+        if not self._in_channels.get(exchange):
             if not queue_suffix:
                 raise Exception(
                     "Must provide a queue suffix when receiving a message from an exchange for the first time"
                 )
 
-            self.__in_channels[exchange] = {"queue": queue.Queue()}
-            self.__in_channels[exchange]["varys_obj"] = consumer(
-                message_queue=self.__in_channels[exchange]["queue"],
+            self._in_channels[exchange] = {"queue": queue.Queue()}
+            self._in_channels[exchange]["varys_obj"] = consumer(
+                message_queue=self._in_channels[exchange]["queue"],
                 routing_key=self.routing_key,
                 exchange=exchange,
-                configuration=self.__credentials,
-                log_file=self.__logfile,
-                log_level=self.__log_level,
+                configuration=self._credentials,
+                log_file=self._logfile,
+                log_level=self._log_level,
                 queue_suffix=queue_suffix,
             )
-            self.__in_channels[exchange]["varys_obj"].start()
+            self._in_channels[exchange]["varys_obj"].start()
 
         try:
-            return self.__in_channels[exchange]["queue"].get(block=block)
+            message = self._in_channels[exchange]["queue"].get(block=block)
+            #Only ack a message when it is pulled out of the thread-safe queue
+            self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
+            return message
         except queue.Empty:
             return None
 
@@ -120,42 +125,52 @@ class varys:
         Either receive all messages available from an existing exchange, or create a new exchange connection and receive all messages available from it.
         """
 
-        if not self.__in_channels.get(exchange):
+        if not self._in_channels.get(exchange):
             if not queue_suffix:
                 raise Exception(
                     "Must provide a queue suffix when receiving a message from an exchange for the first time"
                 )
 
-            self.__in_channels[exchange] = {"queue": queue.Queue()}
-            self.__in_channels[exchange]["varys_obj"] = consumer(
-                message_queue=self.__in_channels[exchange]["queue"],
+            self._in_channels[exchange] = {"queue": queue.Queue()}
+            self._in_channels[exchange]["varys_obj"] = consumer(
+                message_queue=self._in_channels[exchange]["queue"],
                 routing_key=self.routing_key,
                 exchange=exchange,
-                configuration=self.__credentials,
-                log_file=self.__logfile,
-                log_level=self.__log_level,
+                configuration=self._credentials,
+                log_file=self._logfile,
+                log_level=self._log_level,
                 queue_suffix=queue_suffix,
             )
-            self.__in_channels[exchange]["varys_obj"].start()
+            self._in_channels[exchange]["varys_obj"].start()
 
         messages = []
 
-        while not self.__in_channels[exchange]["queue"].empty():
+        #This seems like a terrible idea, but it works
+        while True:
             try:
-                messages.append(
-                    self.receive(
-                        exchange=exchange, queue_suffix=queue_suffix, block=False
-                    )
-                )
+                #Block false returns Queue.Empty no matter what, why does Queue have this arg????????
+                message = self._in_channels[exchange]["queue"].get(block=True, timeout=1)
+                self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
+                messages.append(message)
             except queue.Empty:
                 break
-
+                
         return messages
 
     def get_channels(self):
         """Return all open channels."""
 
         return {
-            "consumer_channels": self.__in_channels.keys(),
-            "producer_channels": self.__out_channels.keys(),
+            "consumer_channels": self._in_channels.keys(),
+            "producer_channels": self._out_channels.keys(),
         }
+    
+    def close(self):
+        """Close all open channels."""
+
+        for key in self._in_channels.keys():
+            self._in_channels[key]["varys_obj"].close_connection()
+            self._in_channels[key]["varys_obj"].stop()
+
+        for key in self._out_channels.keys():
+            self._out_channels[key]["varys_obj"].stop()

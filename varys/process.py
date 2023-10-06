@@ -1,7 +1,6 @@
 from threading import Thread
 
 import pika
-from pika.exchange_type import ExchangeType
 
 class Process(Thread):
     def __init__(self):
@@ -9,8 +8,6 @@ class Process(Thread):
 
         self._connection = None
         self._channel = None
-
-        self._exchange_type = ExchangeType.fanout
 
     def _connect(self):
         self._log.info("Connecting to broker")

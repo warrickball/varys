@@ -38,16 +38,7 @@ class TestVarys(unittest.TestCase):
         # 0.01s seems to be sufficient; 0.1s is just a bit conservative
         time.sleep(0.1)
 
-        channels = self.v.get_channels()
-        for key in channels['consumer_channels']:
-            print(f"tearing down consumer {key}")
-            self.v._varys__in_channels[key]["varys_obj"].close_connection()
-            self.v._varys__in_channels[key]["varys_obj"].stop()
-
-        for key in channels['producer_channels']:
-            print(f"tearing down producer {key}")
-            self.v._varys__out_channels[key]["varys_obj"].stop()
-
+        self.v.close()
         os.remove(TMP_FILENAME)
 
     def test_send_and_receive(self):
@@ -57,7 +48,12 @@ class TestVarys(unittest.TestCase):
 
     def test_send_and_receive_batch(self):
         self.v.send(TEXT, 'basic', queue_suffix='q')
+        self.v.send(TEXT, 'basic', queue_suffix='q')
+        # give the messages time to be received / processed by rmq
+        time.sleep(1)
         messages = self.v.receive_batch('basic', queue_suffix='q')
+        parsed_messages = [json.loads(m.body) for m in messages]
+        self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def test_receive_no_message(self):
         self.assertIsNone(self.v.receive('basic', queue_suffix='q', block=False))
@@ -66,7 +62,7 @@ class TestVarys(unittest.TestCase):
         self.assertRaises(Exception, self.v.send, TEXT, 'basic')
 
     def test_receive_no_suffix(self):
-        self.assertRaises(Exception, self.v.receive, 'basic', block=False)
+        self.assertRaises(Exception, self.v.receive, 'basic')
 
     def test_receive_batch_no_suffix(self):
         self.assertRaises(Exception, self.v.receive_batch, 'basic')

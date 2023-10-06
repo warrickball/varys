@@ -1,3 +1,6 @@
 build*
 varys/__pycache__*
-varys_client.egg-info/*
+tests/__pycache__*
+tests/test.log
+varys.egg-info/*
+.pytest_cache*
