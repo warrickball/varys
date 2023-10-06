@@ -2,6 +2,8 @@ import pika
 from functools import partial
 import time
 
+from pika.exchange_type import ExchangeType
+
 from varys.utils import init_logger, varys_message
 from varys.process import Process
 
@@ -18,6 +20,7 @@ class consumer(Process):
         prefetch_count=5,
         sleep_interval=10,
         reconnect=True,
+        exchange_type=ExchangeType.topic
     ):
         super().__init__()
 
@@ -34,6 +37,8 @@ class consumer(Process):
 
         self._exchange = exchange
         self._queue = exchange + "." + queue_suffix
+
+        self._exchange_type = exchange_type
 
         self._routing_key = routing_key
         self._sleep_interval = sleep_interval
@@ -140,7 +145,6 @@ class consumer(Process):
             f"Received Message: # {message.basic_deliver.delivery_tag} from {message.properties.app_id}, {message.body}"
         )
         self._messages.put(message)
-        # self._acknowledge_message(message.basic_deliver.delivery_tag)
 
     def _acknowledge_message(self, delivery_tag):
         self._log.info(f"Acknowledging message: {delivery_tag}")
