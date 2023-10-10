@@ -7,12 +7,13 @@ import json
 def init_logger(name, log_path, log_level):
     log = logging.getLogger(name)
     log.propagate = False
-    logging_fh = logging.FileHandler(log_path)
     log.setLevel(log_level)
-    logging_fh.setFormatter(
-        logging.Formatter("%(name)s\t::%(levelname)s::%(asctime)s::\t%(message)s")
-    )
-    log.addHandler(logging_fh)
+    if not (log.hasHandlers()):
+        logging_fh = logging.FileHandler(log_path)
+        logging_fh.setFormatter(
+            logging.Formatter("%(name)s\t::%(levelname)s::%(asctime)s::\t%(message)s")
+        )
+        log.addHandler(logging_fh)
     return log
 
 

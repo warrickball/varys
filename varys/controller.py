@@ -89,7 +89,7 @@ class varys:
 
         self._out_channels[exchange]["queue"].put(message)
 
-    def receive(self, exchange, queue_suffix=False, block=True):
+    def receive(self, exchange, queue_suffix=False, block=True, timeout=None):
         """
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it.
         """
@@ -113,9 +113,13 @@ class varys:
             self._in_channels[exchange]["varys_obj"].start()
 
         try:
-            message = self._in_channels[exchange]["queue"].get(block=block)
-            #Only ack a message when it is pulled out of the thread-safe queue
-            self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
+            message = self._in_channels[exchange]["queue"].get(
+                block=block, timeout=timeout
+            )
+            # Only ack a message when it is pulled out of the thread-safe queue
+            self._in_channels[exchange]["varys_obj"]._acknowledge_message(
+                message.basic_deliver.delivery_tag
+            )
             return message
         except queue.Empty:
             return None
@@ -145,16 +149,20 @@ class varys:
 
         messages = []
 
-        #This seems like a terrible idea, but it works
+        # This seems like a terrible idea, but it works
         while True:
             try:
-                #Block false returns Queue.Empty no matter what, why does Queue have this arg????????
-                message = self._in_channels[exchange]["queue"].get(block=True, timeout=1)
-                self._in_channels[exchange]["varys_obj"]._acknowledge_message(message.basic_deliver.delivery_tag)
+                # Block false returns Queue.Empty no matter what, why does Queue have this arg????????
+                message = self._in_channels[exchange]["queue"].get(
+                    block=True, timeout=1
+                )
+                self._in_channels[exchange]["varys_obj"]._acknowledge_message(
+                    message.basic_deliver.delivery_tag
+                )
                 messages.append(message)
             except queue.Empty:
                 break
-                
+
         return messages
 
     def get_channels(self):
@@ -164,7 +172,7 @@ class varys:
             "consumer_channels": self._in_channels.keys(),
             "producer_channels": self._out_channels.keys(),
         }
-    
+
     def close(self):
         """Close all open channels."""
 
