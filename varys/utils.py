@@ -2,6 +2,7 @@ import logging
 from collections import namedtuple
 import sys
 import json
+import os
 
 
 def init_logger(name, log_path, log_level):
@@ -21,7 +22,7 @@ varys_message = namedtuple("varys_message", "basic_deliver properties body")
 
 
 class configurator:
-    def __init__(self, profile, config_path=None):
+    def __init__(self, profile, config_path=os.getenv("VARYS_CFG")):
         try:
             with open(config_path, "rt") as config_fh:
                 config_obj = json.load(config_fh)
