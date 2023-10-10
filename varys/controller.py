@@ -48,10 +48,14 @@ class varys:
         profile,
         logfile,
         log_level="DEBUG",
-        config_path=os.getenv("VARYS_CFG"),
+        config_path=None,
         routing_key="arbitrary_string",
     ):
         self.profile = profile
+
+        if config_path is None:
+            config_path = os.getenv("VARYS_CFG")
+
         self.configuration_path = config_path
 
         self.routing_key = routing_key

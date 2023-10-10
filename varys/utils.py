@@ -22,7 +22,7 @@ varys_message = namedtuple("varys_message", "basic_deliver properties body")
 
 
 class configurator:
-    def __init__(self, profile, config_path=os.getenv("VARYS_CFG")):
+    def __init__(self, profile, config_path):
         try:
             with open(config_path, "rt") as config_fh:
                 config_obj = json.load(config_fh)
