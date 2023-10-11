@@ -4,17 +4,28 @@ import logging
 import pika
 
 class Process(Thread):
-    def __init__(self, exchange, log_file, log_level):
+    def __init__(
+            self,
+            exchange,
+            log_file,
+            log_level,
+            queue_suffix,
+    ):
         super().__init__()
 
-        self._setup_logger(exchange, log_file, log_level)
+        self._exchange = exchange
+        self._queue = exchange + "." + queue_suffix
         self._log_file = log_file  # so we know which file handle to drop when we stop
+        self._setup_logger(log_level)
 
         self._connection = None
         self._channel = None
 
 
-    def _setup_logger(self, name, log_path, log_level):
+    def _setup_logger(self, log_level):
+        name = self._exchange
+        log_path = self._log_file
+
         self._log = logging.getLogger(name)
         self._log.propagate = False
         self._log.setLevel(log_level)
@@ -32,6 +43,17 @@ class Process(Thread):
             )
             self._log.addHandler(logging_fh)
             self._log.handlers[-1].count = 1
+
+
+    def _stop_logger(self):
+        log_path = self._log_file
+
+        handler_filenames = [fh.baseFilename for fh in self._log.handlers]
+        index = handler_filenames.index(log_path)
+        self._log.handlers[index].count -= 1
+
+        if self._log.handlers[index].count == 0:
+            self._log.handlers.pop(index)
 
 
     def _connect(self):

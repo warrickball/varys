@@ -22,7 +22,7 @@ class consumer(Process):
         reconnect=True,
         exchange_type=ExchangeType.topic
     ):
-        super().__init__(exchange, log_file, log_level)
+        super().__init__(exchange, log_file, log_level, queue_suffix)
 
         self._messages = message_queue
 
@@ -32,9 +32,6 @@ class consumer(Process):
         self._consumer_tag = None
         self._consuming = False
         self._prefetch_count = prefetch_count
-
-        self._exchange = exchange
-        self._queue = exchange + "." + queue_suffix
 
         self._exchange_type = exchange_type
 
@@ -186,3 +183,4 @@ class consumer(Process):
                 self._connection.ioloop.stop()
 
             self._log.info("Stopped as instructed")
+            self._stop_logger()
