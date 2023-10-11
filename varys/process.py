@@ -2,9 +2,12 @@ from threading import Thread
 
 import pika
 
+
 class Process(Thread):
     def __init__(self):
         super().__init__()
+
+        Thread.daemon = True
 
         self._connection = None
         self._channel = None
