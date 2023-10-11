@@ -2,9 +2,13 @@ from threading import Thread
 
 import pika
 
+from varys.utils import init_logger
+
 class Process(Thread):
-    def __init__(self):
+    def __init__(self, exchange, log_file, log_level):
         super().__init__()
+
+        self._log = init_logger(exchange, log_file, log_level)
 
         self._connection = None
         self._channel = None

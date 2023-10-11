@@ -22,9 +22,7 @@ class producer(Process):
         exchange_type=ExchangeType.topic
     ):
         # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
-        super().__init__()
-
-        self._log = init_logger(exchange, log_file, log_level)
+        super().__init__(exchange, log_file, log_level)
 
         self._message_queue = message_queue
 

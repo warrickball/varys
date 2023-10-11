@@ -22,11 +22,9 @@ class consumer(Process):
         reconnect=True,
         exchange_type=ExchangeType.topic
     ):
-        super().__init__()
+        super().__init__(exchange, log_file, log_level)
 
         self._messages = message_queue
-
-        self._log = init_logger(exchange, log_file, log_level)
 
         self._should_reconnect = reconnect
         self._reconnect_delay = 10
