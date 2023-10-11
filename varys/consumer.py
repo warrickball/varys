@@ -4,7 +4,7 @@ import time
 
 from pika.exchange_type import ExchangeType
 
-from varys.utils import init_logger, varys_message
+from varys.utils import varys_message
 from varys.process import Process
 
 class consumer(Process):
@@ -184,4 +184,5 @@ class consumer(Process):
                 self._connection.ioloop.start()
             else:
                 self._connection.ioloop.stop()
+
             self._log.info("Stopped as instructed")

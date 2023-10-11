@@ -5,7 +5,6 @@ import json
 
 from pika.exchange_type import ExchangeType
 
-from varys.utils import init_logger
 from varys.process import Process
 
 class producer(Process):

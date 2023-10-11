@@ -5,28 +5,6 @@ import json
 import os
 
 
-def init_logger(name, log_path, log_level):
-    log = logging.getLogger(name)
-    log.propagate = False
-    log.setLevel(log_level)
-
-    # if the filename is already associated with a handler, increase the count
-    try:
-        handler_filenames = [fh.baseFilename for fh in log.handlers]
-        index = handler_filenames.index(log_path)
-        log.handlers[index].count += 1
-    # otherwise create a new filehandler (with initial count 1)
-    except ValueError:
-        logging_fh = logging.FileHandler(log_path)
-        logging_fh.setFormatter(
-            logging.Formatter("%(name)s\t::%(levelname)s::%(asctime)s::\t%(message)s")
-        )
-        log.addHandler(logging_fh)
-        log.handlers[-1].count = 1
-
-    return log
-
-
 varys_message = namedtuple("varys_message", "basic_deliver properties body")
 
 
