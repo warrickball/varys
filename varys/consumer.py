@@ -4,7 +4,7 @@ import time
 
 from pika.exchange_type import ExchangeType
 
-from varys.utils import init_logger, varys_message
+from varys.utils import varys_message
 from varys.process import Process
 
 class consumer(Process):
@@ -22,11 +22,9 @@ class consumer(Process):
         reconnect=True,
         exchange_type=ExchangeType.topic
     ):
-        super().__init__()
+        super().__init__(exchange, log_file, log_level, queue_suffix)
 
         self._messages = message_queue
-
-        self._log = init_logger(exchange, log_file, log_level)
 
         self._should_reconnect = reconnect
         self._reconnect_delay = 10
@@ -34,9 +32,6 @@ class consumer(Process):
         self._consumer_tag = None
         self._consuming = False
         self._prefetch_count = prefetch_count
-
-        self._exchange = exchange
-        self._queue = exchange + "." + queue_suffix
 
         self._exchange_type = exchange_type
 
@@ -186,4 +181,6 @@ class consumer(Process):
                 self._connection.ioloop.start()
             else:
                 self._connection.ioloop.stop()
+
             self._log.info("Stopped as instructed")
+            self._stop_logger()

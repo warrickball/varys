@@ -5,19 +5,6 @@ import json
 import os
 
 
-def init_logger(name, log_path, log_level):
-    log = logging.getLogger(name)
-    log.propagate = False
-    log.setLevel(log_level)
-    if not (log.hasHandlers()):
-        logging_fh = logging.FileHandler(log_path)
-        logging_fh.setFormatter(
-            logging.Formatter("%(name)s\t::%(levelname)s::%(asctime)s::\t%(message)s")
-        )
-        log.addHandler(logging_fh)
-    return log
-
-
 varys_message = namedtuple("varys_message", "basic_deliver properties body")
 
 

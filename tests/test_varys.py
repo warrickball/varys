@@ -3,6 +3,7 @@ import time
 import tempfile
 import os
 import json
+import logging
 from varys import varys
 
 DIR = os.path.dirname(__file__)
@@ -42,29 +43,36 @@ class TestVarys(unittest.TestCase):
         os.remove(TMP_FILENAME)
         time.sleep(0.1)
 
+        # check that all file handles were dropped
+        logger = logging.getLogger("test_varys")
+        self.assertEqual(len(logger.handlers), 0)
+
     def test_send_and_receive(self):
-        self.v.send(TEXT, "basic_1", queue_suffix="q")
-        message = self.v.receive("basic_1", queue_suffix="q")
+        self.v.send(TEXT, "test_varys", queue_suffix="q")
+        message = self.v.receive("test_varys", queue_suffix="q")
         self.assertEqual(TEXT, json.loads(message.body))
 
+        logger = logging.getLogger("test_varys")
+        self.assertEqual(len(logger.handlers), 1)
+
     def test_send_and_receive_batch(self):
-        self.v.send(TEXT, "basic_2", queue_suffix="q")
-        self.v.send(TEXT, "basic_2", queue_suffix="q")
-        messages = self.v.receive_batch("basic_2", queue_suffix="q")
+        self.v.send(TEXT, "test_varys", queue_suffix="q")
+        self.v.send(TEXT, "test_varys", queue_suffix="q")
+        messages = self.v.receive_batch("test_varys", queue_suffix="q")
         parsed_messages = [json.loads(m.body) for m in messages]
         self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def test_receive_no_message(self):
-        self.assertIsNone(self.v.receive("basic_3", queue_suffix="q", timeout=1))
+        self.assertIsNone(self.v.receive("test_varys", queue_suffix="q", timeout=1))
 
     def test_send_no_suffix(self):
-        self.assertRaises(Exception, self.v.send, TEXT, "basic_4")
+        self.assertRaises(Exception, self.v.send, TEXT, "test_varys")
 
     def test_receive_no_suffix(self):
-        self.assertRaises(Exception, self.v.receive, "basic_5")
+        self.assertRaises(Exception, self.v.receive, "test_varys")
 
     def test_receive_batch_no_suffix(self):
-        self.assertRaises(Exception, self.v.receive_batch, "basic_6")
+        self.assertRaises(Exception, self.v.receive_batch, "test_varys")
 
 
 class TestVarysConfig(unittest.TestCase):

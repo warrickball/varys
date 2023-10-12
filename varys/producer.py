@@ -5,7 +5,6 @@ import json
 
 from pika.exchange_type import ExchangeType
 
-from varys.utils import init_logger
 from varys.process import Process
 
 class producer(Process):
@@ -22,16 +21,12 @@ class producer(Process):
         exchange_type=ExchangeType.topic
     ):
         # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
-        super().__init__()
-
-        self._log = init_logger(exchange, log_file, log_level)
+        super().__init__(exchange, log_file, log_level, queue_suffix)
 
         self._message_queue = message_queue
 
         self._sleep_interval = sleep_interval
 
-        self._exchange = exchange
-        self._queue = exchange + "." + queue_suffix
         self._routing_key = routing_key
 
         self._deliveries = None
@@ -195,3 +190,4 @@ class producer(Process):
         self._stopping = True
         self._close_channel()
         self._close_connection()
+        self._stop_logger()
