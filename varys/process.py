@@ -3,6 +3,7 @@ import logging
 
 import pika
 
+
 class Process(Thread):
     def __init__(
             self,
@@ -12,6 +13,8 @@ class Process(Thread):
             queue_suffix,
     ):
         super().__init__()
+
+        Thread.daemon = True
 
         self._exchange = exchange
         self._queue = exchange + "." + queue_suffix
