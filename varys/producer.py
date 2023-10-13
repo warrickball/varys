@@ -15,11 +15,12 @@ class producer(Process):
         log_file,
         log_level,
         queue_suffix,
+        exchange_type,
         routing_key="arbitrary_string",
         sleep_interval=10,
     ):
         # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
-        super().__init__(exchange, log_file, log_level, queue_suffix)
+        super().__init__(exchange, log_file, log_level, queue_suffix, exchange_type)
 
         self._message_queue = message_queue
 

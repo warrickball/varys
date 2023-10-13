@@ -11,7 +11,7 @@ class Process(Thread):
         log_file,
         log_level,
         queue_suffix,
-        exchange_type="fanout",
+        exchange_type,
     ):
         super().__init__()
 

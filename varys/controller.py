@@ -31,9 +31,9 @@ class varys:
 
     Methods
     -------
-    send(message, exchange, queue_suffix=False)
+    send(message, exchange, queue_suffix=False, exchange_type="fanout")
         Either send a message to an existing exchange, or create a new exchange connection and send the message to it. queue_suffix must be provided when sending a message to a queue for the first time to instantiate a new connection.
-    receive(exchange, queue_suffix=False, block=True)
+    receive(exchange, queue_suffix=False, block=True, timeout=None, exchange_type="fanout")
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it. queue_suffix must be provided when receiving a message from a queue for the first time to instantiate a new connection. block determines whether the receive method should block until a message is received or not.
     receive_batch(exchange, queue_suffix=False)
         Either receive a batch of messages from an existing exchange, or create a new exchange connection and receive a batch of messages from it. queue_suffix must be provided when receiving a message from a queue for the first time to instantiate a new connection.
@@ -68,7 +68,7 @@ class varys:
         self._in_channels = {}
         self._out_channels = {}
 
-    def send(self, message, exchange, queue_suffix=False):
+    def send(self, message, exchange, queue_suffix=False, exchange_type="fanout"):
         """
         Either send a message to an existing exchange, or create a new exchange connection and send the message to it.
         """
@@ -88,12 +88,20 @@ class varys:
                 log_file=self._logfile,
                 log_level=self._log_level,
                 queue_suffix=queue_suffix,
+                exchange_type=exchange_type,
             )
             self._out_channels[exchange]["varys_obj"].start()
 
         self._out_channels[exchange]["queue"].put(message)
 
-    def receive(self, exchange, queue_suffix=False, block=True, timeout=None):
+    def receive(
+        self,
+        exchange,
+        queue_suffix=False,
+        block=True,
+        timeout=None,
+        exchange_type="fanout",
+    ):
         """
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it.
         """
@@ -113,6 +121,7 @@ class varys:
                 log_file=self._logfile,
                 log_level=self._log_level,
                 queue_suffix=queue_suffix,
+                exchange_type=exchange_type,
             )
             self._in_channels[exchange]["varys_obj"].start()
 
@@ -128,7 +137,7 @@ class varys:
         except queue.Empty:
             return None
 
-    def receive_batch(self, exchange, queue_suffix=False):
+    def receive_batch(self, exchange, queue_suffix=False, exchange_type="fanout"):
         """
         Either receive all messages available from an existing exchange, or create a new exchange connection and receive all messages available from it.
         """
@@ -148,6 +157,7 @@ class varys:
                 log_file=self._logfile,
                 log_level=self._log_level,
                 queue_suffix=queue_suffix,
+                exchange_type=exchange_type,
             )
             self._in_channels[exchange]["varys_obj"].start()
 

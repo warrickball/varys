@@ -18,11 +18,12 @@ class consumer(Process):
         log_file,
         log_level,
         queue_suffix,
+        exchange_type,
         prefetch_count=5,
         sleep_interval=10,
         reconnect=True,
     ):
-        super().__init__(exchange, log_file, log_level, queue_suffix)
+        super().__init__(exchange, log_file, log_level, queue_suffix, exchange_type)
 
         self._messages = message_queue
 
