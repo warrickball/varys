@@ -7,6 +7,7 @@ from pika.exchange_type import ExchangeType
 from varys.utils import varys_message
 from varys.process import Process
 
+
 class consumer(Process):
     def __init__(
         self,
@@ -20,7 +21,6 @@ class consumer(Process):
         prefetch_count=5,
         sleep_interval=10,
         reconnect=True,
-        exchange_type=ExchangeType.topic
     ):
         super().__init__(exchange, log_file, log_level, queue_suffix)
 
@@ -32,8 +32,6 @@ class consumer(Process):
         self._consumer_tag = None
         self._consuming = False
         self._prefetch_count = prefetch_count
-
-        self._exchange_type = exchange_type
 
         self._routing_key = routing_key
         self._sleep_interval = sleep_interval

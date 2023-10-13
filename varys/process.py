@@ -6,11 +6,12 @@ import pika
 
 class Process(Thread):
     def __init__(
-            self,
-            exchange,
-            log_file,
-            log_level,
-            queue_suffix,
+        self,
+        exchange,
+        log_file,
+        log_level,
+        queue_suffix,
+        exchange_type="fanout",
     ):
         super().__init__()
 
@@ -24,6 +25,18 @@ class Process(Thread):
         self._connection = None
         self._channel = None
 
+        if exchange_type == "fanout":
+            self._exchange_type = pika.exchange_type.ExchangeType.fanout
+        elif exchange_type == "topic":
+            self._exchange_type = pika.exchange_type.ExchangeType.topic
+        elif exchange_type == "direct":
+            self._exchange_type = pika.exchange_type.ExchangeType.direct
+        elif exchange_type == "headers":
+            self._exchange_type = pika.exchange_type.ExchangeType.headers
+        else:
+            raise ValueError(
+                "Exchange type must be one of: fanout, topic, direct, headers"
+            )
 
     def _setup_logger(self, log_level):
         name = self._exchange
@@ -42,11 +55,12 @@ class Process(Thread):
         except ValueError:
             logging_fh = logging.FileHandler(log_path)
             logging_fh.setFormatter(
-                logging.Formatter("%(name)s\t::%(levelname)s::%(asctime)s::\t%(message)s")
+                logging.Formatter(
+                    "%(name)s\t::%(levelname)s::%(asctime)s::\t%(message)s"
+                )
             )
             self._log.addHandler(logging_fh)
             self._log.handlers[-1].count = 1
-
 
     def _stop_logger(self):
         log_path = self._log_file
@@ -57,7 +71,6 @@ class Process(Thread):
 
         if self._log.handlers[index].count == 0:
             self._log.handlers.pop(index)
-
 
     def _connect(self):
         self._log.info("Connecting to broker")
