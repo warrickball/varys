@@ -72,23 +72,6 @@ class producer(Process):
         if not self._stopping:
             self._connection.close()
 
-    def _setup_queue(self, queue):
-        self._log.info(f"Declaring queue {queue}")
-        self._channel.queue_declare(
-            queue=queue, durable=True, callback=self._on_queue_declareok
-        )
-
-    def _on_queue_declareok(self, _unused_frame):
-        self._log.info(
-            f"Binding {self._exchange} to {self._queue} with {self._routing_key}"
-        )
-        self._channel.queue_bind(
-            self._queue,
-            self._exchange,
-            routing_key=self._routing_key,
-            callback=self._on_bindok,
-        )
-
     def _on_bindok(self, _unused_frame):
         self._log.info("Queue successfully bound")
         self._start_publishing()

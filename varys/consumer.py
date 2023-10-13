@@ -1,5 +1,4 @@
 import pika
-from functools import partial
 import time
 
 from pika.exchange_type import ExchangeType
@@ -79,26 +78,6 @@ class consumer(Process):
     def _on_channel_closed(self, channel, reason):
         self._log.warning(f"Channel {channel} was closed: {reason}")
         self.close_connection()
-
-    def _setup_queue(self, queue_name):
-        self._log.info(f"Declaring queue: {queue_name}")
-        q_callback = partial(self._on_queue_declareok, queue_name=queue_name)
-        self._channel.queue_declare(
-            queue=queue_name,
-            callback=q_callback,
-            durable=True,
-        )
-
-    def _on_queue_declareok(self, _unused_frame, queue_name):
-        self._log.info(
-            f"Binding queue {queue_name} to exchange: {self._exchange} with routing key {self._routing_key}"
-        )
-        self._channel.queue_bind(
-            queue_name,
-            self._exchange,
-            routing_key=self._routing_key,
-            callback=self._on_bindok,
-        )
 
     def _on_bindok(self, _unused_frame):
         self._log.info("Queue bound successfully")

@@ -1,4 +1,5 @@
 from threading import Thread
+from functools import partial
 import logging
 
 import pika
@@ -111,3 +112,23 @@ class Process(Thread):
     def _on_declare_exchangeok(self, _unused_frame):
         self._log.info("Exchange declared")
         self._setup_queue(self._queue)
+
+    def _setup_queue(self, queue_name):
+        self._log.info(f"Declaring queue: {queue_name}")
+        q_callback = partial(self._on_queue_declareok, queue_name=queue_name)
+        self._channel.queue_declare(
+            queue=queue_name,
+            callback=q_callback,
+            durable=True,
+        )
+
+    def _on_queue_declareok(self, _unused_frame, queue_name):
+        self._log.info(
+            f"Binding queue {queue_name} to exchange: {self._exchange} with routing key {self._routing_key}"
+        )
+        self._channel.queue_bind(
+            queue_name,
+            self._exchange,
+            routing_key=self._routing_key,
+            callback=self._on_bindok,
+        )
