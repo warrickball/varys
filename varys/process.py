@@ -109,6 +109,14 @@ class Process(Thread):
             durable=True,
         )
 
+    def _nack_message(self, delivery_tag, requeue):
+        self._log.info(f"Nacking message: {delivery_tag}")
+        self._channel.basic_nack(
+            delivery_tag=delivery_tag,
+            multiple=False,
+            requeue=requeue,
+        )
+
     def _on_declare_exchangeok(self, _unused_frame):
         self._log.info("Exchange declared")
         self._setup_queue(self._queue)

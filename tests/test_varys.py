@@ -5,6 +5,7 @@ import os
 import json
 import logging
 from varys import varys
+import pika
 
 DIR = os.path.dirname(__file__)
 LOG_FILENAME = os.path.join(DIR, "test.log")
@@ -39,6 +40,17 @@ class TestVarys(unittest.TestCase):
         # 0.01s seems to be sufficient; 0.1s is just a bit conservative
         time.sleep(0.1)
 
+        credentials = pika.PlainCredentials("guest", "guest")
+
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters("localhost", credentials=credentials)
+        )
+        channel = connection.channel()
+
+        channel.queue_delete(queue="test_varys")
+
+        connection.close()
+
         self.v.close()
         os.remove(TMP_FILENAME)
         time.sleep(0.1)
@@ -56,17 +68,30 @@ class TestVarys(unittest.TestCase):
         self.assertEqual(len(logger.handlers), 1)
 
     def test_manual_ack(self):
-        varys_client = varys("test", LOG_FILENAME, config_path=TMP_FILENAME, auto_acknowledge=False)
 
-        varys_client.send(TEXT, "test_varys", queue_suffix="q")
+        self.v.auto_ack = False
 
-        message = varys_client.receive("test_varys", queue_suffix="q")
+        self.v.send(TEXT, "test_varys", queue_suffix="q")
 
-        varys_client.acknowledge_message(message)
-        # Manually close to prevent hanging
-        time.sleep(0.1)
-        varys_client.close()
-        time.sleep(0.1)
+        message = self.v.receive("test_varys", queue_suffix="q")
+
+        self.v.acknowledge_message(message)
+
+    def test_nack(self):
+        self.v.auto_ack = False
+
+        self.v.send(TEXT, "test_varys", queue_suffix="q")
+
+        message = self.v.receive("test_varys", queue_suffix="q")
+
+        self.v.nack_message(message)
+
+        # check that the message has been requeued
+        message_2 = self.v.receive("test_varys", queue_suffix="q")
+
+        self.v.acknowledge_message(message_2)
+
+        self.assertEqual(message.body, message_2.body)
 
     def test_send_and_receive_batch(self):
         self.v.send(TEXT, "test_varys", queue_suffix="q")
@@ -76,7 +101,9 @@ class TestVarys(unittest.TestCase):
         self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def test_receive_no_message(self):
-        self.assertIsNone(self.v.receive("test_varys", queue_suffix="q", timeout=1))
+        self.assertIsNone(
+            self.v.receive("test_varys_no_message", queue_suffix="q", timeout=1)
+        )
 
     def test_send_no_suffix(self):
         self.assertRaises(Exception, self.v.send, TEXT, "test_varys")
