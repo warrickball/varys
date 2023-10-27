@@ -81,9 +81,8 @@ class varys:
                     "Must provide a queue suffix when sending a message to a queue for the first time"
                 )
 
-            self._out_channels[exchange] = {"queue": queue.Queue()}
-            self._out_channels[exchange]["varys_obj"] = producer(
-                message_queue=self._out_channels[exchange]["queue"],
+            self._out_channels[exchange] = producer(
+                message_queue=queue.Queue(),
                 routing_key=self.routing_key,
                 exchange=exchange,
                 configuration=self._credentials,
@@ -92,9 +91,9 @@ class varys:
                 queue_suffix=queue_suffix,
                 exchange_type=exchange_type,
             )
-            self._out_channels[exchange]["varys_obj"].start()
+            self._out_channels[exchange].start()
 
-        self._out_channels[exchange]["queue"].put(message)
+        self._out_channels[exchange]._message_queue.put(message)
 
     def receive(
         self,
@@ -114,9 +113,8 @@ class varys:
                     "Must provide a queue suffix when receiving a message from an exchange for the first time"
                 )
 
-            self._in_channels[exchange] = {"queue": queue.Queue()}
-            self._in_channels[exchange]["varys_obj"] = consumer(
-                message_queue=self._in_channels[exchange]["queue"],
+            self._in_channels[exchange] = consumer(
+                message_queue=queue.Queue(),
                 routing_key=self.routing_key,
                 exchange=exchange,
                 configuration=self._credentials,
@@ -125,15 +123,15 @@ class varys:
                 queue_suffix=queue_suffix,
                 exchange_type=exchange_type,
             )
-            self._in_channels[exchange]["varys_obj"].start()
+            self._in_channels[exchange].start()
 
         try:
-            message = self._in_channels[exchange]["queue"].get(
+            message = self._in_channels[exchange]._message_queue.get(
                 block=block, timeout=timeout
             )
             if self.auto_ack:
                 # Only ack a message when it is pulled out of the thread-safe queue and auto_ack is set
-                self._in_channels[exchange]["varys_obj"]._acknowledge_message(
+                self._in_channels[exchange]._acknowledge_message(
                     message.basic_deliver.delivery_tag
                 )
             return message
@@ -151,9 +149,8 @@ class varys:
                     "Must provide a queue suffix when receiving a message from an exchange for the first time"
                 )
 
-            self._in_channels[exchange] = {"queue": queue.Queue()}
-            self._in_channels[exchange]["varys_obj"] = consumer(
-                message_queue=self._in_channels[exchange]["queue"],
+            self._in_channels[exchange] = consumer(
+                message_queue=queue.Queue(),
                 routing_key=self.routing_key,
                 exchange=exchange,
                 configuration=self._credentials,
@@ -162,7 +159,7 @@ class varys:
                 queue_suffix=queue_suffix,
                 exchange_type=exchange_type,
             )
-            self._in_channels[exchange]["varys_obj"].start()
+            self._in_channels[exchange].start()
 
         messages = []
 
@@ -170,11 +167,11 @@ class varys:
         while True:
             try:
                 # Block false returns Queue.Empty no matter what, why does Queue have this arg????????
-                message = self._in_channels[exchange]["queue"].get(
+                message = self._in_channels[exchange]._message_queue.get(
                     block=True, timeout=1
                 )
                 if self.auto_ack:
-                    self._in_channels[exchange]["varys_obj"]._acknowledge_message(
+                    self._in_channels[exchange]._acknowledge_message(
                         message.basic_deliver.delivery_tag
                     )
                 messages.append(message)
@@ -188,7 +185,7 @@ class varys:
         Acknowledge a message manually. Not necessary by default where auto_acknowledge is set to True.
         """
 
-        self._in_channels[message.basic_deliver.exchange]["varys_obj"]._acknowledge_message(
+        self._in_channels[message.basic_deliver.exchange]._acknowledge_message(
             message.basic_deliver.delivery_tag
         )
 
@@ -197,9 +194,11 @@ class varys:
         Acknowledge a message manually. Not necessary by default where auto_acknowledge is set to True.
         """
 
-        self._in_channels[message.basic_deliver.exchange][
-            "varys_obj"
-        ]._acknowledge_message(message.basic_deliver.delivery_tag)
+        # maybe break this one-liner up differently
+        (self
+         ._in_channels[message.basic_deliver.exchange]
+         ._acknowledge_message(message.basic_deliver.delivery_tag)
+        )
 
     def nack_message(self, message, requeue=True):
         """
@@ -212,7 +211,7 @@ class varys:
                 "Cannot nack a message when auto_acknowledge is set to True"
             )
 
-        self._in_channels[message.basic_deliver.exchange]["varys_obj"]._nack_message(
+        self._in_channels[message.basic_deliver.exchange]._nack_message(
             delivery_tag=message.basic_deliver.delivery_tag, requeue=requeue
         )
 
@@ -227,9 +226,9 @@ class varys:
     def close(self):
         """Close all open channels."""
 
-        for key in self._in_channels.keys():
-            self._in_channels[key]["varys_obj"].close_connection()
-            self._in_channels[key]["varys_obj"].stop()
+        for channel in self._in_channels.values():
+            channel.close_connection()
+            channel.stop()
 
-        for key in self._out_channels.keys():
-            self._out_channels[key]["varys_obj"].stop()
+        for channel in self._out_channels.values():
+            channel.stop()
