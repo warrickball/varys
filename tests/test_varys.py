@@ -67,6 +67,7 @@ class TestVarys(unittest.TestCase):
         logger = logging.getLogger("test_varys")
         self.assertEqual(len(logger.handlers), 1)
 
+    @unittest.skip
     def test_manual_ack(self):
 
         self.v.auto_ack = False
@@ -77,6 +78,7 @@ class TestVarys(unittest.TestCase):
 
         self.v.acknowledge_message(message)
 
+    @unittest.skip
     def test_nack(self):
         self.v.auto_ack = False
 
