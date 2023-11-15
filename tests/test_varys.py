@@ -40,16 +40,16 @@ class TestVarys(unittest.TestCase):
         # 0.01s seems to be sufficient; 0.1s is just a bit conservative
         time.sleep(0.1)
 
-        credentials = pika.PlainCredentials("guest", "guest")
+        # credentials = pika.PlainCredentials("guest", "guest")
 
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters("localhost", credentials=credentials)
-        )
-        channel = connection.channel()
+        # connection = pika.BlockingConnection(
+        #     pika.ConnectionParameters("localhost", credentials=credentials)
+        # )
+        # channel = connection.channel()
 
-        channel.queue_delete(queue="test_varys")
+        # channel.queue_delete(queue="test_varys")
 
-        connection.close()
+        # connection.close()
 
         self.v.close()
         os.remove(TMP_FILENAME)
