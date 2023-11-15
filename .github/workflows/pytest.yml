@@ -9,17 +9,29 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
-    services:
-      rabbitmq:
-        image: rabbitmq
-        ports:
-          - 5672:5672
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Checkout certificate generator
+      uses: actions/checkout@v3
+      with:
+        repository: rabbitmq/tls-gen
+    - name: Generate certificates
+      run: |
+        cd tls-gen/basic
+        make
+        make verify
+        make info
+        cd -
+        mv -v tls-gen/basic/result/server*.pem tls-gen/basic/result/ca_certificate.pem .rabbitmq/
+        chmod a+rwx .rabbitmq/*
+    - name: Run RabbitMQ server
+      run: |
+        pwd
+        docker run -v $(pwd).rabbitmq:/.rabbitmq -e RABBITMQ_CONFIG_FILE=/.rabbitmq/rabbitmq.conf -p 5671:5671 rabbitmq
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
