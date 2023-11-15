@@ -22,7 +22,7 @@ class TestVarys(unittest.TestCase):
                     "username": "guest",
                     "password": "guest",
                     "amqp_url": "127.0.0.1",
-                    "port": 5672,
+                    "port": 5671,
                 }
             },
         }

@@ -1,5 +1,6 @@
 from threading import Thread
 from functools import partial
+import ssl
 import logging
 
 import pika
@@ -47,12 +48,16 @@ class Process(Thread):
                 "Exchange type must be one of: fanout, topic, direct, headers"
             )
 
+        context = ssl.create_default_context(cafile="/etc/rabbitmq/ssl/ca_certificate.pem")
+        context.verify_mode = ssl.CERT_REQUIRED
+
         self._parameters = pika.ConnectionParameters(
             host=configuration.ampq_url,
             port=configuration.port,
             credentials=pika.PlainCredentials(
                 username=configuration.username, password=configuration.password
             ),
+            ssl_options=pika.SSLOptions(context, "localhost"),
         )
 
     def _setup_logger(self, log_level):
