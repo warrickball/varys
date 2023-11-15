@@ -48,7 +48,7 @@ class Process(Thread):
                 "Exchange type must be one of: fanout, topic, direct, headers"
             )
 
-        context = ssl.create_default_context(cafile="/.rabbitmq/ca_certificate.pem")
+        context = ssl.create_default_context(cafile=".rabbitmq/ca_certificate.pem")
         context.verify_mode = ssl.CERT_REQUIRED
 
         self._parameters = pika.ConnectionParameters(
