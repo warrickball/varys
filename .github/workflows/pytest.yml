@@ -35,8 +35,8 @@ jobs:
     - name: Run RabbitMQ server
       run: |
         pwd
-	# if I do this, the port still seems to be bound in later steps,
-	# so perhaps it doesn't matter when we run it
+        # if I do this, the port still seems to be bound in later steps,
+        # so perhaps it doesn't matter when we run it
         # docker run -d -v $(pwd).rabbitmq:/.rabbitmq -e RABBITMQ_CONFIG_FILE=/.rabbitmq/rabbitmq.conf -p 5671:5671 rabbitmq
     - name: Install dependencies
       run: |
