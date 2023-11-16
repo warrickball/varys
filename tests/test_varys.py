@@ -61,6 +61,7 @@ class TestVarys(unittest.TestCase):
 
     def test_send_and_receive(self):
         self.v.send(TEXT, "test_varys", queue_suffix="q")
+        time.sleep(1)
         message = self.v.receive("test_varys", queue_suffix="q")
         self.assertEqual(TEXT, json.loads(message.body))
 
