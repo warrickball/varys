@@ -50,7 +50,7 @@ jobs:
         # docker run -d -v $(pwd)/.rabbitmq:/.rabbitmq -e RABBITMQ_CONFIG_FILE=/.rabbitmq/rabbitmq.conf -p 5671:5671 -p 5672:5672 rabbitmq
         # sometimes the scripts hang because the channels can't be closed,
         # so run under a short timeout
-        timeout 60s pytest -v --cov-report=term-missing --cov=varys
+        timeout 60s pytest -o log_cli=true --log-cli-level=DEBUG -v --cov-report=term-missing --cov=varys
     - name: 'Upload Logfile'
       uses: actions/upload-artifact@v3
       with:
