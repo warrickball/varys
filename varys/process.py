@@ -48,8 +48,12 @@ class Process(Thread):
                 "Exchange type must be one of: fanout, topic, direct, headers"
             )
 
-        context = ssl.create_default_context(cafile=".rabbitmq/ca_certificate.pem")
-        context.verify_mode = ssl.CERT_REQUIRED
+        if configuration.use_tls:
+            context = ssl.create_default_context(cafile=configuration.ca_certificate)
+            context.verify_mode = ssl.CERT_REQUIRED
+            ssl_options = pika.SSLOptions(context, "localhost")
+        else:
+            ssl_options = None
 
         self._parameters = pika.ConnectionParameters(
             host=configuration.ampq_url,
@@ -57,7 +61,7 @@ class Process(Thread):
             credentials=pika.PlainCredentials(
                 username=configuration.username, password=configuration.password
             ),
-            ssl_options=pika.SSLOptions(context, "localhost"),
+            ssl_options=ssl_options,
         )
 
     def _setup_logger(self, log_level):

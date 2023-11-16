@@ -23,6 +23,8 @@ class TestVarys(unittest.TestCase):
                     "password": "guest",
                     "amqp_url": "127.0.0.1",
                     "port": 5671,
+                    "use_tls": True,
+                    "ca_certificate": ".rabbitmq/ca_certificate.pem",
                 }
             },
         }
