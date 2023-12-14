@@ -49,9 +49,15 @@ class Process(Thread):
             )
 
         if configuration.use_tls:
-            context = ssl.create_default_context(cafile=configuration.ca_certificate)
+            context = ssl.create_default_context(
+                purpose=ssl.Purpose.SERVER_AUTH,
+                cafile=configuration.ca_certificate,
+            )
+            # default behaviour for Purpose.SERVERAUTH
             context.verify_mode = ssl.CERT_REQUIRED
-            ssl_options = pika.SSLOptions(context, "localhost")
+            context.check_hostname = True
+
+            ssl_options = pika.SSLOptions(context, configuration.ampq_url)
         else:
             ssl_options = None
 

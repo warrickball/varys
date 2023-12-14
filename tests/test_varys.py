@@ -107,7 +107,7 @@ class TestVarysTLS(TestVarys):
                 "test": {
                     "username": "guest",
                     "password": "guest",
-                    "amqp_url": "127.0.0.1",
+                    "amqp_url": "localhost",
                     "port": 5671,
                     "use_tls": True,
                     "ca_certificate": ".rabbitmq/ca_certificate.pem",
