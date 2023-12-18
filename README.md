@@ -3,7 +3,7 @@
 ![Varys CI Status](https://github.com/CLIMB-TRE/varys/actions/workflows/pytest.yml/badge.svg)
 
 TODO:
-* Add SSL support
+* Test SSL support with CA-signed certificates
 
 ---
 ### Installation
