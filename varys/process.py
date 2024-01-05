@@ -1,5 +1,6 @@
 from threading import Thread
 from functools import partial
+import ssl
 import logging
 
 import pika
@@ -47,12 +48,26 @@ class Process(Thread):
                 "Exchange type must be one of: fanout, topic, direct, headers"
             )
 
+        if configuration.use_tls:
+            context = ssl.create_default_context(
+                purpose=ssl.Purpose.SERVER_AUTH,
+                cafile=configuration.ca_certificate,
+            )
+            # default behaviour for Purpose.SERVERAUTH
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.check_hostname = True
+
+            ssl_options = pika.SSLOptions(context, configuration.ampq_url)
+        else:
+            ssl_options = None
+
         self._parameters = pika.ConnectionParameters(
             host=configuration.ampq_url,
             port=configuration.port,
             credentials=pika.PlainCredentials(
                 username=configuration.username, password=configuration.password
             ),
+            ssl_options=ssl_options,
         )
 
     def _setup_logger(self, log_level):
