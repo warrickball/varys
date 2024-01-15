@@ -1,5 +1,6 @@
 from threading import Thread
 from functools import partial
+from os import path
 import ssl
 import logging
 
@@ -27,7 +28,7 @@ class Process(Thread):
         self._routing_key = routing_key
         self._exchange = exchange
         self._queue = exchange + "." + queue_suffix
-        self._log_file = log_file  # so we know which file handle to drop when we stop
+        self._log_file = path.abspath(log_file)  # so we know which file handle to drop when we stop
         self._setup_logger(log_level)
 
         self._connection = None
