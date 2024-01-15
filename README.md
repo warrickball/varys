@@ -1,3 +1,5 @@
+![varys logo](varys_logo_scaled.png)
+
 ## Varys - A python RabbitMQ client for CLIMB-TRE
 
 ![Varys CI Status](https://github.com/CLIMB-TRE/varys/actions/workflows/pytest.yml/badge.svg)
