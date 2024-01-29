@@ -40,7 +40,7 @@ class producer(Process):
         self._stopping = False
 
         self._message_properties = pika.BasicProperties(
-            content_type="json", delivery_mode=2
+            content_type="json", delivery_mode=pika.DeliveryMode.Persistent,
         )
 
     def _on_connection_open_error(self, _unused_connection, error):
@@ -60,12 +60,12 @@ class producer(Process):
             self._log.warning(
                 f"Connection to broker closed, will attempt to re-connect in 10 seconds: {reason}"
             )
-            self._connection.ioloop.call_later(10, self._connection.ioloop.start)
+            self._connection.ioloop.call_later(10, self._connection.ioloop.stop)
 
     def _on_channel_closed(self, channel, reason):
         self._log.warning(f"Channel {channel} was closed by broker: {reason}")
         self._channel = None
-        if not self._stopping:
+        if not self._stopping and not self._connection.is_closed:
             self._connection.close()
 
     def _on_bindok(self, _unused_frame):
@@ -157,7 +157,7 @@ class producer(Process):
                 self.stop()
                 if self._connection is not None and not self._connection.is_closed:
                     # Finish closing
-                    self._connection.ioloop.stop()
+                    self._connection.ioloop.start()
 
             return True
 

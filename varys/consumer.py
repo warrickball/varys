@@ -58,7 +58,8 @@ class consumer(Process):
             self.stop()
             self._log.warning(f"Reconnecting after {self._reconnect_delay} seconds")
             time.sleep(self._reconnect_delay)
-            self._connect()
+            self._connection = self._connect()
+            self._connection.ioloop.start()
         else:
             self._log.info(
                 f"Reconnection was not set to re-connect after disconnection so closing"
