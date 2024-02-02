@@ -143,27 +143,42 @@ class producer(Process):
         self._send_if_queued()
 
     def run(self):
-        while not self._stopping:
-            self._connection = None
-            self._deliveries = []
-            self._acked = 0
-            self._nacked = 0
-            self._message_number = 0
-
+        while True:
             try:
-                self._connection = self._connect()
-                self._connection.ioloop.start()
-            except KeyboardInterrupt:
-                self.stop()
-                if self._connection is not None and not self._connection.is_closed:
-                    # Finish closing
-                    self._connection.ioloop.start()
-
-            return True
+                self._connection = pika.BlockingConnection(self._parameters)
+                self._channel = self._connection.channel()
+                self._channel.exchange_declare(
+                    exchange=self._exchange,
+                    exchange_type=self._exchange_type,
+                    durable=True,
+                )
+                self._channel.queue_declare(queue=self._queue, durable=True)
+                self._channel.queue_bind(queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
+                self._connection.process_data_events(time_limit=None)
+            except:
+                if self._stopping:
+                    print("Producer exception but stopping")
+                    break
+                else:
+                    print("Producer exception and not stopping")
+                    continue
 
     def stop(self):
-        self._log.info("Stopping publisher")
+        print("Stopping producer...")
+        # probably have to say we're closing so run doesn't try to reopen connection
         self._stopping = True
-        self._close_channel()
-        self._close_connection()
+        print("- Closing channel...")
+        # if self._channel is not None:
+        #     self._channel.close()
+        # print("- Closing connection...")
+        # if self._connection is not None:
+        #     self._connection.close()
+        self._connection.add_callback_threadsafe(
+            self._connection.close
+        )
+        self._connection.add_callback_threadsafe(
+            self._channel.close
+        )
+        print("- Stopping logger...")
         self._stop_logger()
+        print("Stopped producer.")

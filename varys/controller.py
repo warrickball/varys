@@ -1,5 +1,7 @@
+import functools
 import queue
 import os
+import time
 
 from varys.consumer import consumer
 from varys.producer import producer
@@ -92,8 +94,19 @@ class varys:
                 exchange_type=exchange_type,
             )
             self._out_channels[exchange].start()
+            time.sleep(0.5)
 
-        self._out_channels[exchange]._message_queue.put(message)
+        prod = self._out_channels[exchange]
+        prod._connection.add_callback_threadsafe(
+            functools.partial(
+                prod._channel.basic_publish,
+                exchange,
+                self.routing_key,
+                message,
+                prod._message_properties,
+            )
+        )
+        # self._out_channels[exchange]._message_queue.put(message)
 
     def receive(
         self,
@@ -124,6 +137,7 @@ class varys:
                 exchange_type=exchange_type,
             )
             self._in_channels[exchange].start()
+            time.sleep(0.5)
 
         try:
             message = self._in_channels[exchange]._message_queue.get(
@@ -179,7 +193,7 @@ class varys:
                 break
 
         return messages
-    
+
     def acknowledge_message(self, message):
         """
         Acknowledge a message manually. Not necessary by default where auto_acknowledge is set to True.
@@ -227,8 +241,11 @@ class varys:
         """Close all open channels."""
 
         for channel in self._in_channels.values():
-            channel.close_connection()
             channel.stop()
+            channel.join()
+            print("Varys stopped a consumer.")
 
         for channel in self._out_channels.values():
             channel.stop()
+            # channel.join()
+            print("Varys stopped a controller.")
