@@ -53,7 +53,7 @@ class varys:
         log_level="DEBUG",
         config_path=None,
         routing_key="arbitrary_string",
-        auto_acknowledge=False,
+        auto_acknowledge=True,
     ):
         self.profile = profile
 
@@ -194,15 +194,6 @@ class varys:
                 break
 
         return messages
-
-    def acknowledge_message(self, message):
-        """
-        Acknowledge a message manually. Not necessary by default where auto_acknowledge is set to True.
-        """
-
-        self._in_channels[message.basic_deliver.exchange]._acknowledge_message(
-            message.basic_deliver.delivery_tag
-        )
 
     def acknowledge_message(self, message):
         """

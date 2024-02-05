@@ -121,7 +121,20 @@ class consumer(Process):
 
     def _acknowledge_message(self, delivery_tag):
         self._log.info(f"Acknowledging message: {delivery_tag}")
-        self._channel.basic_ack(delivery_tag)
+        self._connection.add_callback_threadsafe(
+            functools.partial(self._channel.basic_ack, delivery_tag)
+        )
+
+    def _nack_message(self, delivery_tag, requeue):
+        self._log.info(f"Nacking message: {delivery_tag}")
+        self._connection.add_callback_threadsafe(
+            functools.partial(
+                self._channel.basic_nack,
+                delivery_tag=delivery_tag,
+                multiple=False,
+                requeue=requeue,
+            )
+        )
 
     # def _stop_consuming(self):
     #     if self._channel:

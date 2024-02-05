@@ -94,8 +94,8 @@ class TestVarys(unittest.TestCase):
     def receive_no_suffix(self):
         self.assertRaises(Exception, self.v.receive, "test_varys")
 
-    def receive_batch_no_suffix(self):
-        self.assertRaises(Exception, self.v.receive_batch, "test_varys")
+    # def receive_batch_no_suffix(self):
+    #     self.assertRaises(Exception, self.v.receive_batch, "test_varys")
 
 
 class TestVarysTLS(TestVarys):
@@ -126,8 +126,8 @@ class TestVarysTLS(TestVarys):
     # def test_manual_ack(self):
     #     self.manual_ack()
 
-    # def test_nack(self):
-    #     self.nack()
+    def test_nack(self):
+        self.nack()
 
     # def test_send_and_receive_batch(self):
     #     self.send_and_receive_batch()
@@ -135,11 +135,11 @@ class TestVarysTLS(TestVarys):
     def test_receive_no_message(self):
         self.receive_no_message()
 
-    # def test_send_no_suffix(self):
-    #     self.send_no_suffix()
+    def test_send_no_suffix(self):
+        self.send_no_suffix()
 
-    # def test_receive_no_suffix(self):
-    #     self.receive_no_suffix()
+    def test_receive_no_suffix(self):
+        self.receive_no_suffix()
 
     # def test_receive_batch_no_suffix(self):
     #     self.receive_batch_no_suffix()
@@ -173,8 +173,8 @@ class TestVarysNoTLS(TestVarys):
     # def test_manual_ack(self):
     #     self.manual_ack()
 
-    # def test_nack(self):
-    #     self.nack()
+    def test_nack(self):
+        self.nack()
 
     # def test_send_and_receive_batch(self):
     #     self.send_and_receive_batch()
@@ -182,11 +182,11 @@ class TestVarysNoTLS(TestVarys):
     def test_receive_no_message(self):
         self.receive_no_message()
 
-    # def test_send_no_suffix(self):
-    #     self.send_no_suffix()
+    def test_send_no_suffix(self):
+        self.send_no_suffix()
 
-    # def test_receive_no_suffix(self):
-    #     self.receive_no_suffix()
+    def test_receive_no_suffix(self):
+        self.receive_no_suffix()
 
     # def test_receive_batch_no_suffix(self):
     #     self.receive_batch_no_suffix()
