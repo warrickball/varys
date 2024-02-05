@@ -247,5 +247,5 @@ class varys:
 
         for channel in self._out_channels.values():
             channel.stop()
-            # channel.join()
-            print("Varys stopped a controller.")
+            channel.join()
+            print("Varys stopped a producer.")

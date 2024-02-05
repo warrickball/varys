@@ -166,20 +166,35 @@ class consumer(Process):
                 else:
                     print("Consumer exception and not stopping")
                     continue
+            finally:
+                break
 
     def stop(self):
         print("Stopping consumer...")
         self._stopping = True
+
         print("- Stopping consuming...")
         self._connection.add_callback_threadsafe(
             self._channel.stop_consuming
         )
-        self._channel.stop_consuming()
-        if self._channel is not None:
-            self._channel.close()
+        # self._channel.stop_consuming()
+
+        print("- Closing channel...")
+        # if self._channel is not None:
+        #     self._channel.close()
+        self._connection.add_callback_threadsafe(
+            self._channel.close
+        )
+
         print("- Closing connection...")
-        if self._connection is not None:
-            self._connection.close()
+        # if self._connection is not None:
+        #     self._connection.close()
+        self._connection.add_callback_threadsafe(
+            self._connection.close
+        )
+        # print("- Closing connection...")
+        # if self._connection is not None:
+        #     self._connection.close()
         print("- Stopping logger...")
         self._stop_logger()
         print("Stopped consumer.")

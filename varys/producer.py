@@ -162,6 +162,8 @@ class producer(Process):
                 else:
                     print("Producer exception and not stopping")
                     continue
+            finally:
+                break
 
     def stop(self):
         print("Stopping producer...")
@@ -170,14 +172,14 @@ class producer(Process):
         print("- Closing channel...")
         # if self._channel is not None:
         #     self._channel.close()
-        # print("- Closing connection...")
+        self._connection.add_callback_threadsafe(
+            self._channel.close
+        )
+        print("- Closing connection...")
         # if self._connection is not None:
         #     self._connection.close()
         self._connection.add_callback_threadsafe(
             self._connection.close
-        )
-        self._connection.add_callback_threadsafe(
-            self._channel.close
         )
         print("- Stopping logger...")
         self._stop_logger()
