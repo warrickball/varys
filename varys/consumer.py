@@ -157,9 +157,10 @@ class consumer(Process):
                 self._channel.queue_declare(queue=self._queue, durable=True)
                 self._channel.queue_bind(queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
                 self._channel.basic_qos(prefetch_count=1)
-                self._channel.basic_consume(self._queue, self._on_message, auto_ack=True)
+                self._channel.basic_consume(self._queue, self._on_message, auto_ack=False)
                 self._channel.start_consuming()
-            except:
+            except Exception as e:
+                print(e)
                 if self._stopping:
                     print("Consumer exception but stopping")
                     break
@@ -195,6 +196,7 @@ class consumer(Process):
         # print("- Closing connection...")
         # if self._connection is not None:
         #     self._connection.close()
+
         print("- Stopping logger...")
         self._stop_logger()
         print("Stopped consumer.")

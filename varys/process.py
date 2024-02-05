@@ -103,7 +103,8 @@ class Process(Thread):
         self._log.handlers[index].count -= 1
 
         if self._log.handlers[index].count == 0:
-            self._log.handlers.pop(index)
+            handler = self._log.handlers.pop(index)
+            handler.close()
 
     # def _connect(self):
     #     self._log.info("Connecting to broker")

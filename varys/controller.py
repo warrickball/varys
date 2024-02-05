@@ -1,4 +1,5 @@
 import functools
+import json
 import queue
 import os
 import time
@@ -52,7 +53,7 @@ class varys:
         log_level="DEBUG",
         config_path=None,
         routing_key="arbitrary_string",
-        auto_acknowledge=True,
+        auto_acknowledge=False,
     ):
         self.profile = profile
 
@@ -94,7 +95,7 @@ class varys:
                 exchange_type=exchange_type,
             )
             self._out_channels[exchange].start()
-            time.sleep(0.5)
+            time.sleep(0.1)
 
         prod = self._out_channels[exchange]
         prod._connection.add_callback_threadsafe(
@@ -102,7 +103,7 @@ class varys:
                 prod._channel.basic_publish,
                 exchange,
                 self.routing_key,
-                message,
+                json.dumps(message, ensure_ascii=False),
                 prod._message_properties,
             )
         )
@@ -137,7 +138,7 @@ class varys:
                 exchange_type=exchange_type,
             )
             self._in_channels[exchange].start()
-            time.sleep(0.5)
+            time.sleep(0.1)
 
         try:
             message = self._in_channels[exchange]._message_queue.get(
