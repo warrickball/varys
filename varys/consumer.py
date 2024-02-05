@@ -180,8 +180,8 @@ class consumer(Process):
                 else:
                     print("Consumer exception and not stopping")
                     continue
-            finally:
-                break
+
+            break
 
     def stop(self):
         print("Stopping consumer...")

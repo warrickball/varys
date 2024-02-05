@@ -1,3 +1,4 @@
+import functools
 import pika
 import time
 import queue
@@ -154,21 +155,30 @@ class producer(Process):
                 )
                 self._channel.queue_declare(queue=self._queue, durable=True)
                 self._channel.queue_bind(queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
-                self._connection.process_data_events(time_limit=None)
+                # time_limit=None leads to the connection being dropped for inactivity
+                # not sure if this should be while not self._stopping
+                while True:
+                    self._connection.process_data_events(time_limit=5)
             except:
                 if self._stopping:
                     print("Producer exception but stopping")
                     break
                 else:
                     print("Producer exception and not stopping")
+                    time.sleep(2)
                     continue
-            finally:
-                break
+
+            break
 
     def stop(self):
         print("Stopping producer...")
         # probably have to say we're closing so run doesn't try to reopen connection
         self._stopping = True
+
+        # self._connection.add_callback_threadsafe(
+        #     functools.partial(self._connection.process_data_events, time_limit=1)
+        # )
+
         print("- Closing channel...")
         # if self._channel is not None:
         #     self._channel.close()
@@ -181,6 +191,7 @@ class producer(Process):
         self._connection.add_callback_threadsafe(
             self._connection.close
         )
+
         print("- Stopping logger...")
         self._stop_logger()
         print("Stopped producer.")
