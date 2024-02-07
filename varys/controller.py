@@ -97,6 +97,7 @@ class varys:
             self._out_channels[exchange].start()
             time.sleep(0.1)
 
+        # this probably wants to go back into Producer so we can track number of sends
         prod = self._out_channels[exchange]
         prod._connection.add_callback_threadsafe(
             functools.partial(
@@ -109,14 +110,7 @@ class varys:
         )
         # self._out_channels[exchange]._message_queue.put(message)
 
-    def receive(
-        self,
-        exchange,
-        queue_suffix=False,
-        block=True,
-        timeout=None,
-        exchange_type="fanout",
-    ):
+    def receive(self, exchange, queue_suffix=False, timeout=None, exchange_type="fanout"):
         """
         Either receive a message from an existing exchange, or create a new exchange connection and receive a message from it.
         """
@@ -142,7 +136,7 @@ class varys:
 
         try:
             message = self._in_channels[exchange]._message_queue.get(
-                block=block, timeout=timeout
+                block=True, timeout=timeout
             )
             if self.auto_ack:
                 # Only ack a message when it is pulled out of the thread-safe queue and auto_ack is set
@@ -153,44 +147,23 @@ class varys:
         except queue.Empty:
             return None
 
-    def receive_batch(self, exchange, queue_suffix=False, exchange_type="fanout"):
+    def receive_batch(self, exchange, queue_suffix=False, timeout=0, exchange_type="fanout"):
         """
         Either receive all messages available from an existing exchange, or create a new exchange connection and receive all messages available from it.
         """
 
-        if not self._in_channels.get(exchange):
-            if not queue_suffix:
-                raise Exception(
-                    "Must provide a queue suffix when receiving a message from an exchange for the first time"
-                )
-
-            self._in_channels[exchange] = consumer(
-                message_queue=queue.Queue(),
-                routing_key=self.routing_key,
-                exchange=exchange,
-                configuration=self._credentials,
-                log_file=self._logfile,
-                log_level=self._log_level,
-                queue_suffix=queue_suffix,
-                exchange_type=exchange_type,
-            )
-            self._in_channels[exchange].start()
-
         messages = []
-
-        # This seems like a terrible idea, but it works
         while True:
-            try:
-                # Block false returns Queue.Empty no matter what, why does Queue have this arg????????
-                message = self._in_channels[exchange]._message_queue.get(
-                    block=True, timeout=1
+            messages.append(
+                self.receive(
+                    exchange,
+                    queue_suffix=queue_suffix,
+                    timeout=timeout,
+                    exchange_type=exchange_type,
                 )
-                if self.auto_ack:
-                    self._in_channels[exchange]._acknowledge_message(
-                        message.basic_deliver.delivery_tag
-                    )
-                messages.append(message)
-            except queue.Empty:
+            )
+            if messages[-1] is None:
+                messages.pop()
                 break
 
         return messages
@@ -200,10 +173,8 @@ class varys:
         Acknowledge a message manually. Not necessary by default where auto_acknowledge is set to True.
         """
 
-        # maybe break this one-liner up differently
-        (self
-         ._in_channels[message.basic_deliver.exchange]
-         ._acknowledge_message(message.basic_deliver.delivery_tag)
+        self._in_channels[message.basic_deliver.exchange]._acknowledge_message(
+            message.basic_deliver.delivery_tag
         )
 
     def nack_message(self, message, requeue=True):
@@ -235,9 +206,7 @@ class varys:
         for channel in self._in_channels.values():
             channel.stop()
             channel.join()
-            print("Varys stopped a consumer.")
 
         for channel in self._out_channels.values():
             channel.stop()
             channel.join()
-            print("Varys stopped a producer.")

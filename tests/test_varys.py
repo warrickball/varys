@@ -34,7 +34,7 @@ class TestVarys(unittest.TestCase):
         )
         channel = connection.channel()
 
-        channel.queue_delete(queue="test_varys")
+        channel.queue_delete(queue="test_varys.q")
 
         connection.close()
 
@@ -79,13 +79,14 @@ class TestVarys(unittest.TestCase):
     def send_and_receive_batch(self):
         self.v.send(TEXT, "test_varys", queue_suffix="q")
         self.v.send(TEXT, "test_varys", queue_suffix="q")
-        messages = self.v.receive_batch("test_varys", queue_suffix="q")
+
+        messages = self.v.receive_batch("test_varys", queue_suffix="q", timeout=1)
         parsed_messages = [json.loads(m.body) for m in messages]
         self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def receive_no_message(self):
         self.assertIsNone(
-            self.v.receive("test_varys_no_message", queue_suffix="q", timeout=1)
+            self.v.receive("test_varys", queue_suffix="q", timeout=0)
         )
 
     def send_no_suffix(self):
@@ -94,8 +95,8 @@ class TestVarys(unittest.TestCase):
     def receive_no_suffix(self):
         self.assertRaises(Exception, self.v.receive, "test_varys")
 
-    # def receive_batch_no_suffix(self):
-    #     self.assertRaises(Exception, self.v.receive_batch, "test_varys")
+    def receive_batch_no_suffix(self):
+        self.assertRaises(Exception, self.v.receive_batch, "test_varys")
 
 
 class TestVarysTLS(TestVarys):
@@ -129,8 +130,8 @@ class TestVarysTLS(TestVarys):
     def test_nack(self):
         self.nack()
 
-    # def test_send_and_receive_batch(self):
-    #     self.send_and_receive_batch()
+    def test_send_and_receive_batch(self):
+        self.send_and_receive_batch()
 
     def test_receive_no_message(self):
         self.receive_no_message()
@@ -141,8 +142,8 @@ class TestVarysTLS(TestVarys):
     def test_receive_no_suffix(self):
         self.receive_no_suffix()
 
-    # def test_receive_batch_no_suffix(self):
-    #     self.receive_batch_no_suffix()
+    def test_receive_batch_no_suffix(self):
+        self.receive_batch_no_suffix()
 
 
 class TestVarysNoTLS(TestVarys):
@@ -176,8 +177,8 @@ class TestVarysNoTLS(TestVarys):
     def test_nack(self):
         self.nack()
 
-    # def test_send_and_receive_batch(self):
-    #     self.send_and_receive_batch()
+    def test_send_and_receive_batch(self):
+        self.send_and_receive_batch()
 
     def test_receive_no_message(self):
         self.receive_no_message()
@@ -188,8 +189,8 @@ class TestVarysNoTLS(TestVarys):
     def test_receive_no_suffix(self):
         self.receive_no_suffix()
 
-    # def test_receive_batch_no_suffix(self):
-    #     self.receive_batch_no_suffix()
+    def test_receive_batch_no_suffix(self):
+        self.receive_batch_no_suffix()
 
 
 class TestVarysConfig(unittest.TestCase):
