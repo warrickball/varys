@@ -19,6 +19,7 @@ class Process(Thread):
         queue_suffix,
         exchange_type,
         sleep_interval=10,
+        reconnect_wait=10,
     ):
         super().__init__()
 
@@ -33,6 +34,8 @@ class Process(Thread):
 
         self._connection = None
         self._channel = None
+        self._stopping = False
+        self._reconnect_wait = reconnect_wait
 
         self._sleep_interval = sleep_interval
 

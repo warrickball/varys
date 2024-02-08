@@ -19,6 +19,7 @@ class producer(Process):
         exchange_type,
         routing_key="arbitrary_string",
         sleep_interval=10,
+        reconnect_wait=10,
     ):
         # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
         super().__init__(
@@ -31,46 +32,64 @@ class producer(Process):
             queue_suffix,
             exchange_type,
             sleep_interval=sleep_interval,
+            reconnect_wait=reconnect_wait,
         )
 
-        self._deliveries = None
-        self._acked = None
-        self._nacked = None
-        self._message_number = None
-
-        self._stopping = False
+        self._deliveries = []
+        self._acked = 0
+        self._nacked = 0
+        self._message_number = 0
 
         self._message_properties = pika.BasicProperties(
             content_type="json", delivery_mode=pika.DeliveryMode.Persistent,
         )
 
-    # def publish_message(self, message):
-    #     if self._channel is None or not self._channel.is_open:
-    #         return False
+    def publish_message(self, message, max_attempts=1):
+        # need to handle situation where we're reconnecting
+        # I think this is why the Producer *does* need a message queue
+        # otherwise me might try to call _channel.basic publish while it's closed
+        # what did varys do before?
+        #
+        # if self._channel is None or not self._channel.is_open:
+        #     return False
 
-    #     try:
-    #         message_str = json.dumps(message, ensure_ascii=False)
-    #     except TypeError:
-    #         self._log.error(f"Unable to serialise message into json: {str(message)}")
+        try:
+            message_str = json.dumps(message, ensure_ascii=False)
+        except TypeError:
+            self._log.error(f"Unable to serialise message into json: {str(message)}")
 
-    #     self._log.info(f"Sending message: {json.dumps(message)}")
-    #     self._channel.basic_publish(
-    #         self._exchange,
-    #         self._routing_key,
-    #         message_str,
-    #         self._message_properties,
-    #         mandatory=True,
-    #     )
+        attempt = 0
+        while attempt < max_attempts:
+            try:
+                attempt += 1
+                self._log.info(f"Sending message: {json.dumps(message)}")
+                self._connection.add_callback_threadsafe(
+                    functools.partial(
+                        self._channel.basic_publish,
+                        self._exchange,
+                        self._routing_key,
+                        message_str,
+                        self._message_properties,
+                        mandatory=True,
+                    )
+                )
+            except pika.exceptions.ConnectionWrongStateError:
+                self._log.exception(f"Exception while trying to publish message on attempt {attempt}!")
 
-    #     self._message_number += 1
-    #     self._deliveries.append(self._message_number)
-    #     self._message_queue.task_done()
-    #     self._log.info(f"Published message # {self._message_number}")
+                if attempt < max_attempts and self._reconnect_wait >= 0:
+                    time.sleep(self._reconnect_wait)
+                    continue
+                else:
+                    raise
 
-    #     self._send_if_queued()
+            break
+
+        self._message_number += 1
+        # self._deliveries.append(self._message_number)
+        self._log.info(f"Published message #{self._message_number}")
 
     def run(self):
-        while True:
+        while not self._stopping:
             try:
                 self._connection = pika.BlockingConnection(self._parameters)
                 self._channel = self._connection.channel()
@@ -86,15 +105,13 @@ class producer(Process):
                 while True:
                     self._connection.process_data_events(time_limit=1)
             except:
-                if self._stopping:
-                    self._log.debug("Producer caught exception while stopping as expected.")
-                    break
-                else:
-                    self._log.warn("Producer caught exception but not told to stop!")
-                    # time.sleep(1))
-                    continue
+                self._log.exception("Producer caught exception:")
 
-            break
+            if self._stopping or self._reconnect_wait < 0:
+                break
+            else:
+                time.sleep(self._reconnect_wait)
+                continue
 
     def stop(self):
         self._log.info("Stopping producer as instructed...")

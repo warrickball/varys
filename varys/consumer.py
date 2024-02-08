@@ -21,7 +21,7 @@ class consumer(Process):
         exchange_type,
         prefetch_count=5,
         sleep_interval=10,
-        reconnect=True,
+        reconnect_wait=10,
     ):
         super().__init__(
             message_queue,
@@ -33,15 +33,13 @@ class consumer(Process):
             queue_suffix,
             exchange_type,
             sleep_interval=sleep_interval,
+            reconnect_wait=reconnect_wait,
         )
 
-        self._should_reconnect = reconnect
-        self._reconnect_delay = 10
         self._closing = False
         self._consumer_tag = None
         self._consuming = False
         self._prefetch_count = prefetch_count
-        self._stopping = False
 
     def _on_message(self, _unused_channel, basic_deliver, properties, body):
         message = varys_message(basic_deliver, properties, body)
@@ -68,7 +66,7 @@ class consumer(Process):
         )
 
     def run(self):
-        while True:
+        while not self._stopping:
             try:
                 self._connection = pika.BlockingConnection(self._parameters)
                 self._channel = self._connection.channel()
@@ -83,14 +81,13 @@ class consumer(Process):
                 self._channel.basic_consume(self._queue, self._on_message, auto_ack=False)
                 self._channel.start_consuming()
             except Exception as e:
-                if self._stopping:
-                    self._log.debug("Consumer caught exception while stopping as expected.")
-                    break
-                else:
-                    self._log.warn("Consumer caught exception but not told to stop!")
-                    continue
+                self._log.exception("Consumer caught exception:")
 
-            break
+            if self._stopping or self._reconnect_wait < 0:
+                break
+            else:
+                time.sleep(self._reconnect_wait)
+                continue
 
     def stop(self):
         self._log.info("Stopping consumer as instructed...")

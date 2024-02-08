@@ -73,7 +73,7 @@ class varys:
         self._in_channels = {}
         self._out_channels = {}
 
-    def send(self, message, exchange, queue_suffix=False, exchange_type="fanout"):
+    def send(self, message, exchange, queue_suffix=False, exchange_type="fanout", max_attempts=1):
         """
         Either send a message to an existing exchange, or create a new exchange connection and send the message to it.
         """
@@ -98,17 +98,18 @@ class varys:
             time.sleep(0.1)
 
         # this probably wants to go back into Producer so we can track number of sends
-        prod = self._out_channels[exchange]
-        prod._connection.add_callback_threadsafe(
-            functools.partial(
-                prod._channel.basic_publish,
-                exchange,
-                self.routing_key,
-                json.dumps(message, ensure_ascii=False),
-                prod._message_properties,
-            )
-        )
+        # prod = self._out_channels[exchange]
+        # prod._connection.add_callback_threadsafe(
+        #     functools.partial(
+        #         prod._channel.basic_publish,
+        #         exchange,
+        #         self.routing_key,
+        #         json.dumps(message, ensure_ascii=False),
+        #         prod._message_properties,
+        #     )
+        # )
         # self._out_channels[exchange]._message_queue.put(message)
+        self._out_channels[exchange].publish_message(message, max_attempts=max_attempts)
 
     def receive(self, exchange, queue_suffix=False, timeout=None, exchange_type="fanout"):
         """
@@ -132,7 +133,6 @@ class varys:
                 exchange_type=exchange_type,
             )
             self._in_channels[exchange].start()
-            time.sleep(0.1)
 
         try:
             message = self._in_channels[exchange]._message_queue.get(
