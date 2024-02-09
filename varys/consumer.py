@@ -20,7 +20,6 @@ class consumer(Process):
         queue_suffix,
         exchange_type,
         prefetch_count=5,
-        sleep_interval=10,
         reconnect_wait=10,
     ):
         super().__init__(
@@ -32,7 +31,6 @@ class consumer(Process):
             log_level,
             queue_suffix,
             exchange_type,
-            sleep_interval=sleep_interval,
             reconnect_wait=reconnect_wait,
         )
 
@@ -44,14 +42,17 @@ class consumer(Process):
     def _on_message(self, _unused_channel, basic_deliver, properties, body):
         message = varys_message(basic_deliver, properties, body)
         self._log.info(
-            f"Received Message: # {message.basic_deliver.delivery_tag} from {message.properties.app_id}, {message.body}"
+            f"Received Message: #{message.basic_deliver.delivery_tag} from {message.properties.app_id}, {message.body}"
         )
         self._message_queue.put(message)
 
     def _acknowledge_message(self, delivery_tag):
         self._log.info(f"Acknowledging message: {delivery_tag}")
         self._connection.add_callback_threadsafe(
-            functools.partial(self._channel.basic_ack, delivery_tag)
+            functools.partial(
+                self._channel.basic_ack,
+                delivery_tag=delivery_tag,
+            )
         )
 
     def _nack_message(self, delivery_tag, requeue):
@@ -68,6 +69,10 @@ class consumer(Process):
     def run(self):
         while not self._stopping:
             try:
+                # clear the queue, otherwise acking can cause problems on new channel
+                while not self._message_queue.empty():
+                    self._message_queue.get()
+
                 self._connection = pika.BlockingConnection(self._parameters)
                 self._channel = self._connection.channel()
                 self._channel.exchange_declare(
@@ -77,7 +82,7 @@ class consumer(Process):
                 )
                 self._channel.queue_declare(queue=self._queue, durable=True)
                 self._channel.queue_bind(queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
-                self._channel.basic_qos(prefetch_count=1)
+                self._channel.basic_qos(prefetch_count=self._prefetch_count)
                 self._channel.basic_consume(self._queue, self._on_message, auto_ack=False)
                 self._channel.start_consuming()
             except Exception as e:

@@ -133,6 +133,7 @@ class varys:
                 exchange_type=exchange_type,
             )
             self._in_channels[exchange].start()
+            time.sleep(0.1)
 
         try:
             message = self._in_channels[exchange]._message_queue.get(

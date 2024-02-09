@@ -18,10 +18,8 @@ class producer(Process):
         queue_suffix,
         exchange_type,
         routing_key="arbitrary_string",
-        sleep_interval=10,
         reconnect_wait=10,
     ):
-        # username, password, queue, ampq_url, port, log_file, exchange="", routing_key="default", sleep_interval=5
         super().__init__(
             message_queue,
             routing_key,
@@ -31,7 +29,6 @@ class producer(Process):
             log_level,
             queue_suffix,
             exchange_type,
-            sleep_interval=sleep_interval,
             reconnect_wait=reconnect_wait,
         )
 
@@ -62,7 +59,7 @@ class producer(Process):
         while attempt < max_attempts:
             try:
                 attempt += 1
-                self._log.info(f"Sending message: {json.dumps(message)}")
+                self._log.info(f"Sending message (attempt {attempt}): {json.dumps(message)}")
                 self._connection.add_callback_threadsafe(
                     functools.partial(
                         self._channel.basic_publish,
@@ -85,7 +82,7 @@ class producer(Process):
             break
 
         self._message_number += 1
-        # self._deliveries.append(self._message_number)
+        self._deliveries.append(self._message_number)
         self._log.info(f"Published message #{self._message_number}")
 
     def run(self):
@@ -100,6 +97,7 @@ class producer(Process):
                 )
                 self._channel.queue_declare(queue=self._queue, durable=True)
                 self._channel.queue_bind(queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
+                self._channel.confirm_delivery()
                 # time_limit=None leads to the connection being dropped for inactivity
                 # not sure if this should be while not self._stopping
                 while True:

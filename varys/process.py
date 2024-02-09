@@ -18,7 +18,6 @@ class Process(Thread):
         log_level,
         queue_suffix,
         exchange_type,
-        sleep_interval=10,
         reconnect_wait=10,
     ):
         super().__init__()
@@ -36,8 +35,6 @@ class Process(Thread):
         self._channel = None
         self._stopping = False
         self._reconnect_wait = reconnect_wait
-
-        self._sleep_interval = sleep_interval
 
         if exchange_type == "fanout":
             self._exchange_type = pika.exchange_type.ExchangeType.fanout
