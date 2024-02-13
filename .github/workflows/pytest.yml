@@ -10,13 +10,13 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Checkout certificate generator
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: rabbitmq/tls-gen
         path: tls-gen
@@ -47,7 +47,7 @@ jobs:
         # so run under a short timeout
         timeout 60s pytest -v --cov-report=term-missing --cov=varys
     - name: 'Upload Logfile'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: varys-logfile-${{ matrix.python-version }}
         path: tests/test.log
