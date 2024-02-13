@@ -1,5 +1,3 @@
-import functools
-import json
 import queue
 import os
 import time
@@ -97,18 +95,6 @@ class varys:
             self._out_channels[exchange].start()
             time.sleep(0.1)
 
-        # this probably wants to go back into Producer so we can track number of sends
-        # prod = self._out_channels[exchange]
-        # prod._connection.add_callback_threadsafe(
-        #     functools.partial(
-        #         prod._channel.basic_publish,
-        #         exchange,
-        #         self.routing_key,
-        #         json.dumps(message, ensure_ascii=False),
-        #         prod._message_properties,
-        #     )
-        # )
-        # self._out_channels[exchange]._message_queue.put(message)
         self._out_channels[exchange].publish_message(message, max_attempts=max_attempts)
 
     def receive(self, exchange, queue_suffix=False, timeout=None, exchange_type="fanout"):
@@ -152,6 +138,8 @@ class varys:
         """
         Either receive all messages available from an existing exchange, or create a new exchange connection and receive all messages available from it.
         """
+        if timeout is None:
+            raise ValueError("Timeout cannot be `None` or `receive_batch` would block forever.")
 
         messages = []
         while True:

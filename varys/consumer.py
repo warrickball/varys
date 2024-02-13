@@ -2,8 +2,6 @@ import functools
 import pika
 import time
 
-from pika.exchange_type import ExchangeType
-
 from varys.utils import varys_message
 from varys.process import Process
 
@@ -35,8 +33,6 @@ class consumer(Process):
         )
 
         self._closing = False
-        self._consumer_tag = None
-        self._consuming = False
         self._prefetch_count = prefetch_count
 
     def _on_message(self, _unused_channel, basic_deliver, properties, body):

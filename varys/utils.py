@@ -1,8 +1,6 @@
-import logging
 from collections import namedtuple
 import sys
 import json
-import os
 
 
 varys_message = namedtuple("varys_message", "basic_deliver properties body")

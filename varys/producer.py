@@ -1,7 +1,6 @@
 import functools
 import pika
 import time
-import queue
 import json
 
 from varys.process import Process
@@ -32,9 +31,6 @@ class producer(Process):
             reconnect_wait=reconnect_wait,
         )
 
-        self._deliveries = []
-        self._acked = 0
-        self._nacked = 0
         self._message_number = 0
 
         self._message_properties = pika.BasicProperties(
@@ -42,14 +38,6 @@ class producer(Process):
         )
 
     def publish_message(self, message, max_attempts=1):
-        # need to handle situation where we're reconnecting
-        # I think this is why the Producer *does* need a message queue
-        # otherwise me might try to call _channel.basic publish while it's closed
-        # what did varys do before?
-        #
-        # if self._channel is None or not self._channel.is_open:
-        #     return False
-
         try:
             message_str = json.dumps(message, ensure_ascii=False)
         except TypeError:
@@ -82,7 +70,6 @@ class producer(Process):
             break
 
         self._message_number += 1
-        self._deliveries.append(self._message_number)
         self._log.info(f"Published message #{self._message_number}")
 
     def run(self):
