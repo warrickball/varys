@@ -6,7 +6,7 @@ import json
 from varys.process import Process
 
 
-class producer(Process):
+class Producer(Process):
     def __init__(
         self,
         message_queue,

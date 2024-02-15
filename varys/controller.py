@@ -2,12 +2,12 @@ import queue
 import os
 import time
 
-from varys.consumer import consumer
-from varys.producer import producer
+from varys.consumer import Consumer
+from varys.producer import Producer
 from varys.utils import configurator
 
 
-class varys:
+class Varys:
     """
     A high-level wrapper for the producer and consumer classes used by varys, abstracting away the tedious details.
 
@@ -82,7 +82,7 @@ class varys:
                     "Must provide a queue suffix when sending a message to a queue for the first time"
                 )
 
-            self._out_channels[exchange] = producer(
+            self._out_channels[exchange] = Producer(
                 message_queue=queue.Queue(),
                 routing_key=self.routing_key,
                 exchange=exchange,
@@ -108,7 +108,7 @@ class varys:
                     "Must provide a queue suffix when receiving a message from an exchange for the first time"
                 )
 
-            self._in_channels[exchange] = consumer(
+            self._in_channels[exchange] = Consumer(
                 message_queue=queue.Queue(),
                 routing_key=self.routing_key,
                 exchange=exchange,

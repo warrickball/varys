@@ -6,7 +6,7 @@ from varys.utils import varys_message
 from varys.process import Process
 
 
-class consumer(Process):
+class Consumer(Process):
     def __init__(
         self,
         message_queue,
@@ -17,8 +17,8 @@ class consumer(Process):
         log_level,
         queue_suffix,
         exchange_type,
-        prefetch_count=5,
         reconnect_wait=10,
+        prefetch_count=5,
     ):
         super().__init__(
             message_queue,
