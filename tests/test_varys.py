@@ -4,7 +4,7 @@ import tempfile
 import os
 import json
 import logging
-from varys import varys
+from varys import Varys
 import pika
 
 DIR = os.path.dirname(__file__)
@@ -23,6 +23,10 @@ class TestVarys(unittest.TestCase):
         # 0.01s seems to be sufficient; 0.1s is just a bit conservative
         time.sleep(0.1)
 
+        self.v.close()
+        os.remove(TMP_FILENAME)
+        time.sleep(0.1)
+
         credentials = pika.PlainCredentials("guest", "guest")
 
         connection = pika.BlockingConnection(
@@ -30,13 +34,9 @@ class TestVarys(unittest.TestCase):
         )
         channel = connection.channel()
 
-        channel.queue_delete(queue="test_varys")
+        channel.queue_delete(queue="test_varys.q")
 
         connection.close()
-
-        self.v.close()
-        os.remove(TMP_FILENAME)
-        time.sleep(0.1)
 
         # check that all file handles were dropped
         logger = logging.getLogger("test_varys")
@@ -79,13 +79,14 @@ class TestVarys(unittest.TestCase):
     def send_and_receive_batch(self):
         self.v.send(TEXT, "test_varys", queue_suffix="q")
         self.v.send(TEXT, "test_varys", queue_suffix="q")
-        messages = self.v.receive_batch("test_varys", queue_suffix="q")
+
+        messages = self.v.receive_batch("test_varys", queue_suffix="q", timeout=1)
         parsed_messages = [json.loads(m.body) for m in messages]
         self.assertListEqual([TEXT, TEXT], parsed_messages)
 
     def receive_no_message(self):
         self.assertIsNone(
-            self.v.receive("test_varys_no_message", queue_suffix="q", timeout=1)
+            self.v.receive("test_varys", queue_suffix="q", timeout=0)
         )
 
     def send_no_suffix(self):
@@ -118,7 +119,7 @@ class TestVarysTLS(TestVarys):
         with open(TMP_FILENAME, "w") as f:
             json.dump(config, f, ensure_ascii=False)
 
-        self.v = varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
+        self.v = Varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
 
     def test_send_and_receive(self):
         self.send_and_receive()
@@ -165,7 +166,7 @@ class TestVarysNoTLS(TestVarys):
         with open(TMP_FILENAME, "w") as f:
             json.dump(config, f, ensure_ascii=False)
 
-        self.v = varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
+        self.v = Varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
 
     def test_send_and_receive(self):
         self.send_and_receive()
@@ -202,7 +203,7 @@ class TestVarysConfig(unittest.TestCase):
 
         # use a context manager so we can check SystemExit code
         with self.assertRaises(SystemExit) as cm:
-            v = varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
+            v = Varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
 
         self.assertEqual(cm.exception.code, 11)
 
@@ -216,7 +217,7 @@ class TestVarysConfig(unittest.TestCase):
             json.dump(config, f, ensure_ascii=False)
 
         with self.assertRaises(SystemExit) as cm:
-            v = varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
+            v = Varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
 
         self.assertEqual(cm.exception.code, 2)
 
@@ -235,6 +236,9 @@ class TestVarysConfig(unittest.TestCase):
             json.dump(config, f, ensure_ascii=False)
 
         with self.assertRaises(SystemExit) as cm:
-            v = varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
+            v = Varys("test", LOG_FILENAME, config_path=TMP_FILENAME)
 
         self.assertEqual(cm.exception.code, 11)
+
+if __name__ == '__main__':
+    unittest.main()

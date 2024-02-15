@@ -1,1 +1,1 @@
-from varys.controller import varys
+from varys.controller import Varys

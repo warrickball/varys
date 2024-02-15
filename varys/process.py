@@ -1,5 +1,4 @@
 from threading import Thread
-from functools import partial
 from os import path
 import ssl
 import logging
@@ -11,18 +10,16 @@ class Process(Thread):
     def __init__(
         self,
         message_queue,
-        routing_key,
         exchange,
         configuration,
         log_file,
         log_level,
         queue_suffix,
         exchange_type,
-        sleep_interval=10,
+        routing_key="arbitrary_string",
+        reconnect_wait=10,
     ):
         super().__init__()
-
-        Thread.daemon = True
 
         self._message_queue = message_queue
         self._routing_key = routing_key
@@ -33,8 +30,8 @@ class Process(Thread):
 
         self._connection = None
         self._channel = None
-
-        self._sleep_interval = sleep_interval
+        self._stopping = False
+        self._reconnect_wait = reconnect_wait
 
         if exchange_type == "fanout":
             self._exchange_type = pika.exchange_type.ExchangeType.fanout
@@ -103,72 +100,5 @@ class Process(Thread):
         self._log.handlers[index].count -= 1
 
         if self._log.handlers[index].count == 0:
-            self._log.handlers.pop(index)
-
-    def _connect(self):
-        self._log.info("Connecting to broker")
-        return pika.SelectConnection(
-            self._parameters,
-            on_open_callback=self._on_connection_open,
-            on_open_error_callback=self._on_connection_open_error,
-            on_close_callback=self._on_connection_closed,
-        )
-
-    def _on_connection_open(self, _unused_connection):
-        self._log.info("Successfully opened connection to broker")
-        self._open_channel()
-
-    def _open_channel(self):
-        self._log.info("Creating a new channel")
-        self._connection.channel(on_open_callback=self._on_channel_open)
-
-    def _on_channel_open(self, channel):
-        self._log.info("Channel successfully opened")
-        self._channel = channel
-        self._add_on_channel_close_callback()
-        self._setup_exchange(self._exchange)
-
-    def _add_on_channel_close_callback(self):
-        self._log.info("Adding channel close callback")
-        self._channel.add_on_close_callback(self._on_channel_closed)
-
-    def _setup_exchange(self, exchange_name):
-        self._log.info(f"Declaring exchange: {exchange_name}")
-        self._channel.exchange_declare(
-            exchange=exchange_name,
-            exchange_type=self._exchange_type,
-            callback=self._on_declare_exchangeok,
-            durable=True,
-        )
-
-    def _nack_message(self, delivery_tag, requeue):
-        self._log.info(f"Nacking message: {delivery_tag}")
-        self._channel.basic_nack(
-            delivery_tag=delivery_tag,
-            multiple=False,
-            requeue=requeue,
-        )
-
-    def _on_declare_exchangeok(self, _unused_frame):
-        self._log.info("Exchange declared")
-        self._setup_queue(self._queue)
-
-    def _setup_queue(self, queue_name):
-        self._log.info(f"Declaring queue: {queue_name}")
-        q_callback = partial(self._on_queue_declareok, queue_name=queue_name)
-        self._channel.queue_declare(
-            queue=queue_name,
-            callback=q_callback,
-            durable=True,
-        )
-
-    def _on_queue_declareok(self, _unused_frame, queue_name):
-        self._log.info(
-            f"Binding queue {queue_name} to exchange: {self._exchange} with routing key {self._routing_key}"
-        )
-        self._channel.queue_bind(
-            queue_name,
-            self._exchange,
-            routing_key=self._routing_key,
-            callback=self._on_bindok,
-        )
+            handler = self._log.handlers.pop(index)
+            handler.close()
