@@ -10,13 +10,13 @@ class Process(Thread):
     def __init__(
         self,
         message_queue,
-        routing_key,
         exchange,
         configuration,
         log_file,
         log_level,
         queue_suffix,
         exchange_type,
+        routing_key="arbitrary_string",
         reconnect_wait=10,
     ):
         super().__init__()

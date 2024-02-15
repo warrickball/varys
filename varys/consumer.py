@@ -10,25 +10,25 @@ class Consumer(Process):
     def __init__(
         self,
         message_queue,
-        routing_key,
         exchange,
         configuration,
         log_file,
         log_level,
         queue_suffix,
         exchange_type,
+        routing_key="arbitrary_string",
         reconnect_wait=10,
         prefetch_count=5,
     ):
         super().__init__(
             message_queue,
-            routing_key,
             exchange,
             configuration,
             log_file,
             log_level,
             queue_suffix,
             exchange_type,
+            routing_key=routing_key,
             reconnect_wait=reconnect_wait,
         )
 
